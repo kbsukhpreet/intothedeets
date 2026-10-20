@@ -1,4 +1,5 @@
 import { requireWedding } from "@/lib/wedding";
+import { SITE_URL } from "@/lib/env";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
@@ -16,7 +17,7 @@ export default async function SettingsPage() {
       .order("created_at", { ascending: false }),
   ]);
 
-  const site = process.env.NEXT_PUBLIC_SITE_URL ?? "https://intothedeets.com";
+  const site = SITE_URL || "https://intothedeets.com";
 
   return (
     <div className="space-y-8">

@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { createClient } from "@/lib/supabase/server";
+import { SITE_URL } from "@/lib/env";
 
 function safeNext(value: FormDataEntryValue | null) {
   const s = typeof value === "string" ? value : "";
@@ -10,7 +11,7 @@ function safeNext(value: FormDataEntryValue | null) {
 }
 
 async function siteUrl() {
-  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL;
+  if (SITE_URL) return SITE_URL;
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? "https";
