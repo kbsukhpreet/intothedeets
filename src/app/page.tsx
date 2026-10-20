@@ -5,7 +5,7 @@ import { Logo } from "@/components/logo";
 
 const FEATURES = [
   {
-    title: "Wedding HQ",
+    title: "Event HQ",
     body: "Open the app and see what matters today: what's due, who to follow up with, and how many days are left.",
   },
   {
@@ -13,14 +13,16 @@ const FEATURES = [
     body: "Contacts, contract totals, payment schedules and a running log of every call, email and meeting.",
   },
   {
-    title: "Budget that knows what's due",
+    title: "A budget that knows what's due",
     body: "Contracted, paid and remaining for every vendor, plus exactly what you owe in the next 90 days.",
   },
   {
-    title: "Plan it together",
-    body: "Invite your partner so you're both working from the same list, not two different notes apps.",
+    title: "Plan together, run many events",
+    body: "Invite co-hosts, family or clients to collaborate. Planners can keep every event in one account.",
   },
 ];
+
+const EVENT_EXAMPLES = ["Weddings", "Birthdays", "Corporate events", "Showers", "Galas", "Reunions"];
 
 export default async function Home() {
   const supabase = await createClient();
@@ -40,10 +42,10 @@ export default async function Home() {
 
       <section className="py-16 sm:py-24">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-accent">
-          Wedding planning, organized
+          Event planning, organized
         </p>
         <h1 className="h-display max-w-3xl text-5xl leading-[1.05] sm:text-7xl">
-          Every detail of your wedding, in one place.
+          Every detail of your event, in one place.
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted">
           Stop digging through texts, emails and spreadsheets. Into the Deets keeps your
@@ -54,6 +56,13 @@ export default async function Home() {
           <Link href="/login?mode=signup" className="btn-primary px-6 py-3 text-base">
             Start planning — it&apos;s free
           </Link>
+        </div>
+        <div className="mt-10 flex flex-wrap gap-2">
+          {EVENT_EXAMPLES.map((e) => (
+            <span key={e} className="rounded-full border border-line bg-white px-3 py-1 text-sm text-muted">
+              {e}
+            </span>
+          ))}
         </div>
       </section>
 

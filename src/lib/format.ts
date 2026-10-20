@@ -57,22 +57,50 @@ export function relativeDue(day: string) {
   return prettyDate(day);
 }
 
+export const EVENT_TYPES = [
+  "Wedding",
+  "Engagement party",
+  "Bridal or baby shower",
+  "Birthday",
+  "Anniversary",
+  "Graduation",
+  "Corporate event",
+  "Conference",
+  "Fundraiser or gala",
+  "Holiday party",
+  "Reunion",
+  "Religious or cultural celebration",
+  "Other",
+] as const;
+
+export const ACCOUNT_PURPOSES = [
+  { value: "own_event", label: "I'm planning my own event" },
+  { value: "helping", label: "I'm helping plan a friend's or family member's event" },
+  { value: "planner", label: "I'm an event planner managing clients' events" },
+  { value: "company", label: "I plan events for my company or organization" },
+  { value: "vendor", label: "I'm a vendor or service provider" },
+  { value: "exploring", label: "Just exploring" },
+] as const;
+
 export const VENDOR_CATEGORIES = [
   "Venue",
-  "Caterer",
-  "Photographer",
-  "Videographer",
+  "Catering",
+  "Bar & Beverages",
+  "Photography",
+  "Videography",
   "Florist",
-  "DJ / Band",
-  "Officiant",
+  "DJ / Music",
+  "Entertainment",
+  "Host / MC / Officiant",
   "Hair & Makeup",
   "Attire",
   "Cake & Desserts",
-  "Planner",
+  "Planner / Coordinator",
   "Rentals",
   "Decor",
+  "AV & Lighting",
   "Transportation",
-  "Stationery",
+  "Stationery & Printing",
   "Other",
 ] as const;
 

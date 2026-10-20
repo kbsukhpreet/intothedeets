@@ -2,7 +2,8 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { num, requireWedding, text } from "@/lib/wedding";
+import { cookies } from "next/headers";
+import { CURRENT_EVENT_COOKIE, num, requireEvent, text } from "@/lib/event";
 import { todayISO } from "@/lib/format";
 
 function refresh() {
@@ -16,13 +17,13 @@ function fail(message: string): never {
 // ── Vendors ──────────────────────────────────────────────────
 
 export async function addVendor(form: FormData) {
-  const { supabase, wedding } = await requireWedding();
+  const { supabase, event } = await requireEvent();
   const name = text(form, "name") ?? fail("Vendor name is required");
 
   const { data, error } = await supabase
     .from("vendors")
     .insert({
-      wedding_id: wedding.id,
+      event_id: event.id,
       name,
       category: text(form, "category") ?? "Other",
       status: text(form, "status") ?? "researching",
@@ -40,7 +41,7 @@ export async function addVendor(form: FormData) {
 }
 
 export async function updateVendor(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const id = text(form, "id") ?? fail("Missing vendor");
 
   const { error } = await supabase
@@ -63,7 +64,7 @@ export async function updateVendor(form: FormData) {
 }
 
 export async function deleteVendor(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const id = text(form, "id") ?? fail("Missing vendor");
   const { error } = await supabase.from("vendors").delete().eq("id", id);
   if (error) fail(error.message);
@@ -74,9 +75,9 @@ export async function deleteVendor(form: FormData) {
 // ── Conversation log ─────────────────────────────────────────
 
 export async function addVendorNote(form: FormData) {
-  const { supabase, wedding, user } = await requireWedding();
+  const { supabase, event, user } = await requireEvent();
   const { error } = await supabase.from("vendor_notes").insert({
-    wedding_id: wedding.id,
+    event_id: event.id,
     vendor_id: text(form, "vendor_id") ?? fail("Missing vendor"),
     summary: text(form, "summary") ?? fail("Write a quick summary"),
     channel: text(form, "channel") ?? "other",
@@ -88,7 +89,7 @@ export async function addVendorNote(form: FormData) {
 }
 
 export async function deleteVendorNote(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const { error } = await supabase
     .from("vendor_notes")
     .delete()
@@ -100,10 +101,10 @@ export async function deleteVendorNote(form: FormData) {
 // ── Payments ─────────────────────────────────────────────────
 
 export async function addPayment(form: FormData) {
-  const { supabase, wedding } = await requireWedding();
+  const { supabase, event } = await requireEvent();
   const paid = form.get("paid") === "on";
   const { error } = await supabase.from("payments").insert({
-    wedding_id: wedding.id,
+    event_id: event.id,
     vendor_id: text(form, "vendor_id"),
     label: text(form, "label") ?? "Payment",
     amount: num(form, "amount") ?? fail("Enter an amount"),
@@ -116,7 +117,7 @@ export async function addPayment(form: FormData) {
 }
 
 export async function togglePayment(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const paid = form.get("paid") === "true";
   const { error } = await supabase
     .from("payments")
@@ -127,7 +128,7 @@ export async function togglePayment(form: FormData) {
 }
 
 export async function deletePayment(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const { error } = await supabase
     .from("payments")
     .delete()
@@ -139,9 +140,9 @@ export async function deletePayment(form: FormData) {
 // ── Tasks ────────────────────────────────────────────────────
 
 export async function addTask(form: FormData) {
-  const { supabase, wedding, user } = await requireWedding();
+  const { supabase, event, user } = await requireEvent();
   const { error } = await supabase.from("tasks").insert({
-    wedding_id: wedding.id,
+    event_id: event.id,
     title: text(form, "title") ?? fail("Give the task a name"),
     due_date: text(form, "due_date"),
     vendor_id: text(form, "vendor_id"),
@@ -153,7 +154,7 @@ export async function addTask(form: FormData) {
 }
 
 export async function toggleTask(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const done = form.get("done") === "true";
   const { error } = await supabase
     .from("tasks")
@@ -164,7 +165,7 @@ export async function toggleTask(form: FormData) {
 }
 
 export async function deleteTask(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const { error } = await supabase
     .from("tasks")
     .delete()
@@ -173,37 +174,65 @@ export async function deleteTask(form: FormData) {
   refresh();
 }
 
-// ── Wedding settings & partner invites ───────────────────────
+// ── Events ───────────────────────────────────────────────
 
-export async function updateWedding(form: FormData) {
-  const { supabase, wedding } = await requireWedding();
+export async function updateEvent(form: FormData) {
+  const { supabase, event } = await requireEvent();
   const { error } = await supabase
-    .from("weddings")
+    .from("events")
     .update({
-      partner1_name: text(form, "partner1_name") ?? wedding.partner1_name,
-      partner2_name: text(form, "partner2_name") ?? wedding.partner2_name,
-      wedding_date: text(form, "wedding_date"),
+      name: text(form, "name") ?? event.name,
+      event_type: text(form, "event_type") ?? event.event_type,
+      event_date: text(form, "event_date"),
       location: text(form, "location"),
       total_budget: num(form, "total_budget") ?? 0,
     })
-    .eq("id", wedding.id);
+    .eq("id", event.id);
   if (error) fail(error.message);
   refresh();
 }
 
+export async function switchEvent(form: FormData) {
+  const id = text(form, "event_id");
+  if (id) {
+    (await cookies()).set(CURRENT_EVENT_COOKIE, id, {
+      path: "/",
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 60 * 60 * 24 * 365,
+    });
+  }
+  refresh();
+  redirect(text(form, "to") ?? "/hq");
+}
+
+export async function deleteEvent(form: FormData) {
+  const { supabase, event, user } = await requireEvent();
+  if (event.created_by !== user.id) fail("Only the person who created this event can delete it.");
+  if (text(form, "confirm_name") !== event.name) fail("Type the event name exactly to delete it.");
+  const { error } = await supabase.from("events").delete().eq("id", event.id);
+  if (error) fail(error.message);
+  (await cookies()).delete(CURRENT_EVENT_COOKIE);
+  refresh();
+  redirect("/events");
+}
+
+// ── Collaborator invites ─────────────────────────────────────
+
 export async function createInvite() {
-  const { supabase, wedding, user } = await requireWedding();
+  const { supabase, event, user } = await requireEvent();
   const { error } = await supabase
-    .from("wedding_invites")
-    .insert({ wedding_id: wedding.id, invited_by: user.id });
+    .from("event_invites")
+    .insert({ event_id: event.id, invited_by: user.id });
   if (error) fail(error.message);
   refresh();
 }
 
 export async function revokeInvite(form: FormData) {
-  const { supabase } = await requireWedding();
+  const { supabase } = await requireEvent();
   const { error } = await supabase
-    .from("wedding_invites")
+    .from("event_invites")
     .delete()
     .eq("id", text(form, "id") ?? fail("Missing invite"));
   if (error) fail(error.message);

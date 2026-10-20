@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO } from "@/lib/format";
 import { Empty, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
@@ -21,9 +21,9 @@ import {
 
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase } = await requireWedding();
+  const { supabase, event } = await requireEvent();
 
-  const { data: vendor } = await supabase.from("vendors").select("*").eq("id", id).maybeSingle();
+  const { data: vendor } = await supabase.from("vendors").select("*").eq("id", id).eq("event_id", event.id).maybeSingle();
   if (!vendor) notFound();
 
   const [{ data: notes }, { data: payments }, { data: tasks }] = await Promise.all([

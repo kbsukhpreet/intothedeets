@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import { money } from "@/lib/format";
 import { Empty, PageHeader, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
@@ -14,12 +14,12 @@ export default async function VendorsPage({
   searchParams: Promise<{ q?: string }>;
 }) {
   const { q } = await searchParams;
-  const { supabase } = await requireWedding();
+  const { supabase, event } = await requireEvent();
 
   const [{ data: vendorRows }, { data: paymentRows }, { data: noteRows }] = await Promise.all([
-    supabase.from("vendors").select("id, name, category, status, contract_total, contact_name").order("name"),
-    supabase.from("payments").select("vendor_id, amount, paid"),
-    q ? supabase.from("vendor_notes").select("vendor_id").ilike("summary", `%${q}%`) : Promise.resolve({ data: [] }),
+    supabase.from("vendors").select("id, name, category, status, contract_total, contact_name").eq("event_id", event.id).order("name"),
+    supabase.from("payments").select("vendor_id, amount, paid").eq("event_id", event.id),
+    q ? supabase.from("vendor_notes").select("vendor_id").eq("event_id", event.id).ilike("summary", `%${q}%`) : Promise.resolve({ data: [] }),
   ]);
 
   const paidBy = new Map<string, number>();

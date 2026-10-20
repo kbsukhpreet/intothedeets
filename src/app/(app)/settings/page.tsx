@@ -1,42 +1,53 @@
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import { SITE_URL } from "@/lib/env";
+import { EVENT_TYPES } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { CopyButton } from "@/components/copy-button";
-import { createInvite, revokeInvite, updateWedding } from "../actions";
+import { createInvite, deleteEvent, revokeInvite, updateEvent } from "../actions";
 
 export default async function SettingsPage() {
-  const { supabase, wedding, user } = await requireWedding();
+  const { supabase, event, user } = await requireEvent();
 
   const [{ data: members }, { data: invites }] = await Promise.all([
-    supabase.from("wedding_members").select("user_id, role, display_name, email").order("joined_at"),
     supabase
-      .from("wedding_invites")
+      .from("event_members")
+      .select("user_id, role, display_name, email")
+      .eq("event_id", event.id)
+      .order("joined_at"),
+    supabase
+      .from("event_invites")
       .select("id, token, created_at")
+      .eq("event_id", event.id)
       .is("accepted_at", null)
       .order("created_at", { ascending: false }),
   ]);
 
   const site = SITE_URL || "https://intothedeets.com";
+  const isCreator = event.created_by === user.id;
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Settings" subtitle="Your wedding details and who's planning with you." />
+      <PageHeader title="Settings" subtitle="This event's details and who's planning it with you." />
 
       <section className="card p-6">
-        <h2 className="h-display text-2xl">Wedding details</h2>
-        <form action={updateWedding} className="mt-5 grid gap-4 sm:grid-cols-2">
-          <div>
-            <label className="label" htmlFor="p1">Partner one</label>
-            <input id="p1" name="partner1_name" defaultValue={wedding.partner1_name} required className="input" />
+        <h2 className="h-display text-2xl">Event details</h2>
+        <form action={updateEvent} className="mt-5 grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className="label" htmlFor="name">Event name</label>
+            <input id="name" name="name" defaultValue={event.name} required className="input" />
           </div>
           <div>
-            <label className="label" htmlFor="p2">Partner two</label>
-            <input id="p2" name="partner2_name" defaultValue={wedding.partner2_name} required className="input" />
+            <label className="label" htmlFor="type">Type of event</label>
+            <select id="type" name="event_type" defaultValue={event.event_type} className="input">
+              {EVENT_TYPES.map((t) => (
+                <option key={t}>{t}</option>
+              ))}
+            </select>
           </div>
           <div>
-            <label className="label" htmlFor="date">Wedding date</label>
-            <input id="date" name="wedding_date" type="date" defaultValue={wedding.wedding_date ?? ""} className="input" />
+            <label className="label" htmlFor="date">Event date</label>
+            <input id="date" name="event_date" type="date" defaultValue={event.event_date ?? ""} className="input" />
           </div>
           <div>
             <label className="label" htmlFor="budget">Total budget</label>
@@ -44,13 +55,13 @@ export default async function SettingsPage() {
               id="budget"
               name="total_budget"
               inputMode="decimal"
-              defaultValue={Number(wedding.total_budget) || ""}
+              defaultValue={Number(event.total_budget) || ""}
               className="input"
             />
           </div>
-          <div className="sm:col-span-2">
+          <div>
             <label className="label" htmlFor="loc">City or venue</label>
-            <input id="loc" name="location" defaultValue={wedding.location ?? ""} className="input" />
+            <input id="loc" name="location" defaultValue={event.location ?? ""} className="input" />
           </div>
           <div className="sm:col-span-2">
             <SubmitButton>Save details</SubmitButton>
@@ -61,7 +72,7 @@ export default async function SettingsPage() {
       <section className="card p-6">
         <h2 className="h-display text-2xl">Planning together</h2>
         <p className="mt-1 text-sm text-muted">
-          Everyone here sees and edits the same vendors, budget and tasks.
+          Everyone here sees and edits this event&apos;s vendors, budget and tasks.
         </p>
 
         <ul className="mt-5 divide-y divide-line">
@@ -75,17 +86,17 @@ export default async function SettingsPage() {
                 <p className="text-sm text-muted">{m.email}</p>
               </div>
               <span className="text-xs uppercase tracking-wider text-muted">
-                {m.role === "owner" ? "Creator" : m.role}
+                {m.role === "owner" ? "Creator" : "Collaborator"}
               </span>
             </li>
           ))}
         </ul>
 
         <div className="mt-6 rounded-xl bg-paper p-4">
-          <p className="font-medium">Invite your partner</p>
+          <p className="font-medium">Invite someone to help plan</p>
           <p className="mt-1 text-sm text-muted">
-            Create a private link and text or email it to them. They&apos;ll make an account and
-            join this wedding. Each link works once.
+            A partner, family member, co-host or planner. Create a private link and text or
+            email it to them. They&apos;ll make an account and join this event. Each link works once.
           </p>
 
           {(invites ?? []).map((inv) => {
@@ -111,6 +122,24 @@ export default async function SettingsPage() {
           )}
         </div>
       </section>
+
+      {isCreator && (
+        <details className="card group p-6">
+          <summary className="cursor-pointer list-none text-sm text-muted hover:text-ink">
+            Delete this event…
+          </summary>
+          <form action={deleteEvent} className="mt-4 space-y-3">
+            <p className="text-sm">
+              This permanently deletes <strong>{event.name}</strong> with all of its vendors,
+              conversations, payments and tasks, for everyone. Type the event name to confirm.
+            </p>
+            <input name="confirm_name" required placeholder={event.name} className="input" />
+            <SubmitButton className="btn-ghost text-accent-dark" pendingText="Deleting…">
+              Delete event forever
+            </SubmitButton>
+          </form>
+        </details>
+      )}
     </div>
   );
 }

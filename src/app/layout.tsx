@@ -7,9 +7,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
 
 export const metadata: Metadata = {
-  title: "Into the Deets — your wedding, all in one place",
+  title: "Into the Deets — every detail of your event, in one place",
   description:
-    "Vendors, conversations, payments, tasks and every little detail of your wedding, organized in one place.",
+    "Vendors, conversations, payments, tasks and every little detail of your event, organized in one place.",
   metadataBase: new URL(SITE_URL || "https://intothedeets.com"),
 };
 

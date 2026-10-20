@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import { addDaysISO, prettyDate, relativeDue, todayISO } from "@/lib/format";
 import { Empty, PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
@@ -21,7 +21,7 @@ export default async function TasksPage({
 }) {
   const { show } = await searchParams;
   const showDone = show === "done";
-  const { supabase } = await requireWedding();
+  const { supabase, event } = await requireEvent();
   const today = todayISO();
   const nextWeek = addDaysISO(7);
 
@@ -29,10 +29,11 @@ export default async function TasksPage({
     supabase
       .from("tasks")
       .select("id, title, notes, due_date, done, vendor_id")
+      .eq("event_id", event.id)
       .eq("done", showDone)
       .order(showDone ? "done_at" : "due_date", { ascending: !showDone, nullsFirst: false })
       .order("created_at", { ascending: true }),
-    supabase.from("vendors").select("id, name").order("name"),
+    supabase.from("vendors").select("id, name").eq("event_id", event.id).order("name"),
   ]);
 
   const tasks = (taskRows ?? []) as Task[];

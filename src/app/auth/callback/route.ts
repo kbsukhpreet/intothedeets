@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
 
   return NextResponse.redirect(
     `${origin}/login?error=${encodeURIComponent(
-      "That link didn't work or has expired. Try logging in, or sign up again."
+      "That link didn't work or has expired. Your account may already be confirmed, so try logging in."
     )}`
   );
 }

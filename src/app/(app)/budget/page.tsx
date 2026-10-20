@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import { addDaysISO, money, prettyDate, relativeDue, todayISO } from "@/lib/format";
 import { Empty, PageHeader, StatusPill } from "@/components/page-header";
 import { togglePayment } from "../actions";
@@ -15,7 +15,7 @@ type Payment = {
 };
 
 export default async function BudgetPage() {
-  const { supabase, wedding } = await requireWedding();
+  const { supabase, event } = await requireEvent();
   const today = todayISO();
   const in90 = addDaysISO(90);
 
@@ -23,11 +23,13 @@ export default async function BudgetPage() {
     supabase
       .from("vendors")
       .select("id, name, category, status, contract_total")
+      .eq("event_id", event.id)
       .neq("status", "declined")
       .order("contract_total", { ascending: false }),
     supabase
       .from("payments")
       .select("id, label, amount, due_date, paid, paid_on, vendor_id")
+      .eq("event_id", event.id)
       .order("due_date", { ascending: true, nullsFirst: false }),
   ]);
 
@@ -40,7 +42,7 @@ export default async function BudgetPage() {
     if (p.paid && p.vendor_id) paidBy.set(p.vendor_id, (paidBy.get(p.vendor_id) ?? 0) + Number(p.amount));
   }
 
-  const budget = Number(wedding.total_budget);
+  const budget = Number(event.total_budget);
   const committed = vendors.reduce((s, v) => s + Number(v.contract_total), 0);
   const paid = payments.filter((p) => p.paid).reduce((s, p) => s + Number(p.amount), 0);
   const owed = Math.max(committed - paid, 0);

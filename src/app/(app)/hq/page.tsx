@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { requireWedding } from "@/lib/wedding";
+import { requireEvent } from "@/lib/event";
 import {
   addDaysISO,
   channelLabel,
@@ -31,25 +31,28 @@ type Note = {
 };
 
 export default async function HQPage() {
-  const { supabase, wedding, member } = await requireWedding();
+  const { supabase, event, user } = await requireEvent();
   const today = todayISO();
   const in90 = addDaysISO(90);
 
-  const [vendorsRes, paymentsRes, tasksRes, notesRes, membersRes] = await Promise.all([
-    supabase.from("vendors").select("id, name, category, status, contract_total"),
-    supabase.from("payments").select("id, label, amount, due_date, paid, vendor_id"),
+  const [vendorsRes, paymentsRes, tasksRes, notesRes, membersRes, profileRes] = await Promise.all([
+    supabase.from("vendors").select("id, name, category, status, contract_total").eq("event_id", event.id),
+    supabase.from("payments").select("id, label, amount, due_date, paid, vendor_id").eq("event_id", event.id),
     supabase
       .from("tasks")
       .select("id, title, due_date, vendor_id")
+      .eq("event_id", event.id)
       .eq("done", false)
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true }),
     supabase
       .from("vendor_notes")
       .select("id, summary, note_date, channel, vendor_id")
+      .eq("event_id", event.id)
       .order("note_date", { ascending: false })
       .order("created_at", { ascending: false }),
-    supabase.from("wedding_members").select("user_id"),
+    supabase.from("event_members").select("user_id").eq("event_id", event.id),
+    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
   ]);
 
   const vendors = (vendorsRes.data ?? []) as Vendor[];
@@ -60,7 +63,7 @@ export default async function HQPage() {
   const vendorName = new Map(vendors.map((v) => [v.id, v.name]));
 
   // Countdown
-  const days = wedding.wedding_date ? daysUntil(wedding.wedding_date) : null;
+  const days = event.event_date ? daysUntil(event.event_date) : null;
 
   // Money
   const committed = vendors
@@ -86,7 +89,7 @@ export default async function HQPage() {
     .filter((v) => v.status === "contacted")
     .filter((v) => !lastContact.has(v.id) || lastContact.get(v.id)! < weekAgo);
 
-  const greetingName = member.display_name ?? wedding.partner1_name;
+  const greetingName = (profileRes.data?.full_name ?? "").split(" ")[0] || "there";
   const isNew = vendors.length === 0;
 
   return (
@@ -96,24 +99,25 @@ export default async function HQPage() {
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <div className="absolute -right-24 top-6 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <p className="text-sm text-white/80">Hi {greetingName} 👋</p>
+        <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-white/70">{event.event_type}</p>
         {days !== null ? (
           <>
-            <p className="h-display mt-3 text-6xl sm:text-7xl">
-              {days > 0 ? days : days === 0 ? "Today" : "Married!"}
+            <p className="h-display mt-1 text-6xl sm:text-7xl">
+              {days > 0 ? days : days === 0 ? "Today" : "Done!"}
             </p>
             <p className="mt-1 text-white/85">
               {days > 0
-                ? `days until ${wedding.partner1_name} & ${wedding.partner2_name} say I do · ${prettyDate(wedding.wedding_date, true)}`
+                ? `day${days === 1 ? "" : "s"} until ${event.name} · ${prettyDate(event.event_date, true)}`
                 : days === 0
-                  ? "is the day. Enjoy every second."
-                  : "Congratulations!"}
+                  ? `${event.name} is today. Enjoy every second.`
+                  : `${event.name} has wrapped. Congratulations!`}
             </p>
           </>
         ) : (
           <>
-            <p className="h-display mt-3 text-4xl">{wedding.partner1_name} &amp; {wedding.partner2_name}</p>
+            <p className="h-display mt-1 text-4xl">{event.name}</p>
             <Link href="/settings" className="mt-2 inline-block text-white/85 underline">
-              Add your wedding date to start the countdown
+              Add your event date to start the countdown
             </Link>
           </>
         )}
@@ -143,9 +147,9 @@ export default async function HQPage() {
         />
         <Stat
           label="Budget used"
-          value={wedding.total_budget > 0 ? `${Math.round((committed / Number(wedding.total_budget)) * 100)}%` : money(committed)}
-          sub={wedding.total_budget > 0 ? `${money(committed)} of ${money(wedding.total_budget)}` : "committed"}
-          tone={wedding.total_budget > 0 && committed > Number(wedding.total_budget) ? "warn" : undefined}
+          value={event.total_budget > 0 ? `${Math.round((committed / Number(event.total_budget)) * 100)}%` : money(committed)}
+          sub={event.total_budget > 0 ? `${money(committed)} of ${money(event.total_budget)}` : "committed"}
+          tone={event.total_budget > 0 && committed > Number(event.total_budget) ? "warn" : undefined}
           href="/budget"
         />
       </section>
@@ -156,7 +160,7 @@ export default async function HQPage() {
           <ol className="mt-4 space-y-3 text-sm">
             <Step done={vendors.length > 0} href="/vendors" text="Add the vendors you've booked or are talking to" />
             <Step done={payments.length > 0} href="/vendors" text="Add their payment schedules so we can track what's due" />
-            <Step done={memberCount > 1} href="/settings" text="Invite your partner to plan together" />
+            <Step done={memberCount > 1} href="/settings" text="Invite anyone helping you plan" />
           </ol>
         </section>
       )}
