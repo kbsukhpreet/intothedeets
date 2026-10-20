@@ -21,7 +21,16 @@ type Payment = {
   vendor_id: string | null;
 };
 type Vendor = { id: string; name: string; category: string; status: string; contract_total: number };
-type Task = { id: string; title: string; due_date: string | null; vendor_id: string | null };
+type Task = {
+  id: string;
+  number: number;
+  title: string;
+  status: string;
+  priority: string;
+  due_date: string | null;
+  vendor_id: string | null;
+  assignee_id: string | null;
+};
 type Note = {
   id: string;
   summary: string;
@@ -40,9 +49,9 @@ export default async function HQPage() {
     supabase.from("payments").select("id, label, amount, due_date, paid, vendor_id").eq("event_id", event.id),
     supabase
       .from("tasks")
-      .select("id, title, due_date, vendor_id")
+      .select("id, number, title, status, priority, due_date, vendor_id, assignee_id")
       .eq("event_id", event.id)
-      .eq("done", false)
+      .neq("status", "done")
       .order("due_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true }),
     supabase
@@ -51,7 +60,7 @@ export default async function HQPage() {
       .eq("event_id", event.id)
       .order("note_date", { ascending: false })
       .order("created_at", { ascending: false }),
-    supabase.from("event_members").select("user_id").eq("event_id", event.id),
+    supabase.from("team_members").select("user_id").eq("team_id", event.team_id),
     supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
   ]);
 
@@ -79,7 +88,8 @@ export default async function HQPage() {
 
   // Tasks
   const overdueTasks = tasks.filter((t) => t.due_date && t.due_date < today);
-  const topTasks = tasks.slice(0, 6);
+  const mine = tasks.filter((t) => t.assignee_id === user.id);
+  const topTasks = mine.slice(0, 6);
 
   // Follow-ups: vendors "in talks" with no conversation in the last 7 days
   const lastContact = new Map<string, string>();
@@ -133,11 +143,11 @@ export default async function HQPage() {
           href="/budget"
         />
         <Stat
-          label="Open tasks"
+          label="Open tickets"
           value={String(tasks.length)}
-          sub={overdueTasks.length ? `${overdueTasks.length} overdue` : "None overdue"}
+          sub={overdueTasks.length ? `${overdueTasks.length} overdue` : `${mine.length} assigned to you`}
           tone={overdueTasks.length ? "warn" : undefined}
-          href="/tasks"
+          href="/tickets"
         />
         <Stat
           label="Booked vendors"
@@ -160,7 +170,7 @@ export default async function HQPage() {
           <ol className="mt-4 space-y-3 text-sm">
             <Step done={vendors.length > 0} href="/vendors" text="Add the vendors you've booked or are talking to" />
             <Step done={payments.length > 0} href="/vendors" text="Add their payment schedules so we can track what's due" />
-            <Step done={memberCount > 1} href="/settings" text="Invite anyone helping you plan" />
+            <Step done={memberCount > 1} href="/team" text="Invite your team, then assign them tickets" />
           </ol>
         </section>
       )}
@@ -196,9 +206,9 @@ export default async function HQPage() {
         </Panel>
 
         {/* Tasks */}
-        <Panel title="Needs attention" href="/tasks">
+        <Panel title="Your tickets" href="/tickets?who=me">
           {topTasks.length === 0 ? (
-            <Empty>Nothing on the list. Add tasks from the Tasks page.</Empty>
+            <Empty>Nothing assigned to you for this event. See the whole team on the Tickets page.</Empty>
           ) : (
             <ul className="divide-y divide-line">
               {topTasks.map((t) => (
@@ -212,14 +222,22 @@ export default async function HQPage() {
                     />
                   </form>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate">{t.title}</p>
-                    {(t.due_date || t.vendor_id) && (
-                      <p className="truncate text-xs text-muted">
-                        {t.due_date && (
-                          <span className={t.due_date < today ? "text-amber" : ""}>{relativeDue(t.due_date)}</span>
-                        )}
-                        {t.due_date && t.vendor_id ? " · " : ""}
-                        {t.vendor_id ? vendorName.get(t.vendor_id) : ""}
+                    <Link href={`/tickets/${t.id}`} className="block truncate hover:text-accent">
+                      <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>
+                      {t.title}
+                    </Link>
+                    {(t.due_date || t.vendor_id || t.status !== "todo") && (
+                      <p className="flex gap-1.5 truncate text-xs text-muted">
+                        {[
+                          t.status === "in_progress" ? <span key="s">In progress</span> : null,
+                          t.status === "blocked" ? <span key="s" className="text-amber">Blocked</span> : null,
+                          t.due_date ? (
+                            <span key="d" className={t.due_date < today ? "text-amber" : ""}>{relativeDue(t.due_date)}</span>
+                          ) : null,
+                          t.vendor_id ? <span key="v">{vendorName.get(t.vendor_id)}</span> : null,
+                        ]
+                          .filter(Boolean)
+                          .flatMap((el, i) => (i ? [<span key={`sep${i}`}>·</span>, el] : [el]))}
                       </p>
                     )}
                   </div>

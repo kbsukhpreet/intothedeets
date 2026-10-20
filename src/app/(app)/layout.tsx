@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireEvent } from "@/lib/event";
 import { daysUntil } from "@/lib/format";
 import { Logo } from "@/components/logo";
@@ -6,7 +7,7 @@ import { EventSwitcher } from "@/components/event-switcher";
 import { logOut } from "@/app/login/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { event, events } = await requireEvent();
+  const { event, events, team } = await requireEvent();
   const days = event.event_date ? daysUntil(event.event_date) : null;
   const switcherEvents = events.map((e) => ({ id: e.id, name: e.name }));
 
@@ -17,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Logo href="/hq" />
         </div>
         <div className="mt-8 px-2">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-accent">{event.event_type}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-accent">{team.name} · {event.event_type}</p>
           <p className="h-display mt-0.5 text-lg leading-tight">{event.name}</p>
           {days !== null && days >= 0 && (
             <p className="mt-0.5 text-sm text-muted">
@@ -40,9 +41,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <header className="border-b border-line px-5 py-4 md:hidden">
           <div className="flex items-center justify-between">
             <Logo href="/hq" />
-            <form action={logOut}>
-              <button className="text-sm text-muted">Log out</button>
-            </form>
+            <div className="flex items-center gap-4 text-sm text-muted">
+              <Link href="/settings">Settings</Link>
+              <form action={logOut}>
+                <button>Log out</button>
+              </form>
+            </div>
           </div>
           <div className="mt-3">
             <p className="h-display text-lg leading-tight">{event.name}</p>

@@ -45,7 +45,9 @@ export async function middleware(request: NextRequest) {
   if (!user && !isPublic(pathname)) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    url.search = `?next=${encodeURIComponent(pathname + search)}`;
+    // People arriving from a team invite link are usually new, so show sign-up.
+    const mode = pathname.startsWith("/invite/") ? "mode=signup&" : "";
+    url.search = `?${mode}next=${encodeURIComponent(pathname + search)}`;
     return NextResponse.redirect(url);
   }
 

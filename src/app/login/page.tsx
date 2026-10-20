@@ -40,6 +40,13 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
           {isSignup ? "Get every detail of your event organized in minutes." : "Log in to your event HQ."}
         </p>
 
+        {next.startsWith("/invite/") && !params.error && (
+          <p className="mt-5 rounded-lg bg-sage-soft px-3 py-2 text-sm text-sage">
+            {isSignup
+              ? "You've been invited to a team. Create your account and you'll join right away."
+              : "You've been invited to a team. Log in and you'll join right away."}
+          </p>
+        )}
         {params.error && (
           <p className="mt-5 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-dark">{params.error}</p>
         )}

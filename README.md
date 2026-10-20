@@ -7,20 +7,22 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 ## What's in it
 
 - **Sign up** with full name, email, what you're using it for, and a password (no email confirmation)
-- **Multiple events per account**, with a switcher, so planners can manage every client's event
-- **Event HQ:** countdown, payments due in the next 90 days, open and overdue tasks, vendor follow-ups, recent conversations
-- **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule, to-dos and notes. Search covers conversation history too
+- **Teams** (like Jira): create a team, share one invite link, and everyone joins with their own account. A team can run many events; people can be on several teams
+- **Tickets:** numbered (#12), with assignee, status (To do / In progress / Blocked / Done), priority, due date, description, linked vendor, and a thread of progress updates
+- **Tickets dashboard:** progress for each person, a board and list view, and filters for me / a teammate / unassigned / an event
+- **Event HQ:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
+- **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too
 - **Budget:** contract, paid and remaining per vendor, budget progress, and a payment timeline
-- **Tasks:** grouped by overdue, this week, coming up and someday, optionally linked to a vendor
-- **Settings:** edit event details, invite collaborators with a private link, delete an event
+- **Settings:** edit event details, delete an event
 
-All data is protected by database security rules: people only see events they belong to.
+All data is protected by database security rules: people only see their own teams' events.
 
 ## One-time setup
 
 ### 1. Supabase (database)
 1. Open your project → **SQL Editor** → **New query**.
-2. Paste the contents of `supabase/schema.sql` and click **Run**.
+2. **New project:** paste the contents of `supabase/schema.sql` and click **Run**.
+   **Existing project:** run only the files in `supabase/migrations/` you haven't run yet, in order.
 3. Go to **Authentication → Sign In / Providers → Email** and turn **Confirm email** off.
 4. Go to **Authentication → URL Configuration**:
    - **Site URL:** `https://intothedeets.com`
@@ -50,8 +52,9 @@ npm run dev                  # open http://localhost:3000
 
 ## Roadmap
 
-1. ✅ Foundation: accounts, multiple events, HQ, vendors, budget, tasks, collaborator invites
-2. Brain Dump: type messy thoughts, and AI sorts them into tasks, vendor notes and reminders
-3. "What am I forgetting?" assistant
-4. Google Calendar and Drive connections; email forwarding address for vendor emails
-5. Guests, RSVPs, save-the-dates and invitations; seating chart
+1. ✅ Foundation: accounts, teams, events, tickets dashboard, HQ, vendors, budget
+2. Email notifications when you're assigned a ticket; drag-and-drop board
+3. Brain Dump: type messy thoughts, and AI sorts them into tasks, vendor notes and reminders
+4. "What am I forgetting?" assistant
+5. Google Calendar and Drive connections; email forwarding address for vendor emails
+6. Guests, RSVPs, save-the-dates and invitations; seating chart

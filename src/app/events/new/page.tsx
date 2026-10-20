@@ -8,21 +8,26 @@ import { createEvent } from "../actions";
 export default async function NewEventPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; team?: string; new_team?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, team, new_team } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ count }, { data: profile }] = await Promise.all([
+  const [{ count }, { data: teams }, { data: profile }] = await Promise.all([
     supabase.from("events").select("id", { count: "exact", head: true }),
+    supabase.from("teams").select("id, name").order("created_at"),
     supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
   ]);
   const isFirst = !count;
-  const firstName = (profile?.full_name ?? "").split(" ")[0];
+  const fullName = profile?.full_name ?? "";
+  const firstName = fullName.split(" ")[0];
+  const lastName = fullName.split(" ").length > 1 ? fullName.split(" ").slice(-1)[0] : "";
+  const suggestedTeamName = lastName ? `The ${lastName} Family` : firstName ? `${firstName}'s team` : "My team";
+  const joinedTeam = (teams ?? []).find((t) => t.id === team);
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center px-5 py-12">
@@ -33,11 +38,16 @@ export default async function NewEventPage({
         )}
       </div>
       <h1 className="h-display text-4xl">
-        {isFirst ? `Welcome${firstName ? `, ${firstName}` : ""}! Let's set up your first event` : "Add a new event"}
+        {new_team
+          ? "Start a new team"
+          : joinedTeam
+            ? `Welcome to ${joinedTeam.name}! Add your first event`
+            : isFirst
+              ? `Welcome${firstName ? `, ${firstName}` : ""}! Let's set up your first event`
+              : "Add a new event"}
       </h1>
       <p className="mt-2 text-muted">
-        Just the basics for now. You can change any of this later, and invite anyone who&apos;s
-        helping you plan.
+        Just the basics for now. You can change any of this later.
       </p>
 
       {error && (
@@ -45,7 +55,14 @@ export default async function NewEventPage({
       )}
 
       <div className="mt-8">
-        <EventForm action={createEvent} submitLabel={isFirst ? "Create my event" : "Create event"} />
+        <EventForm
+          action={createEvent}
+          submitLabel={isFirst ? "Create my event" : "Create event"}
+          teams={teams ?? []}
+          defaultTeamId={team}
+          suggestedTeamName={new_team ? "" : suggestedTeamName}
+          forceNewTeam={Boolean(new_team)}
+        />
       </div>
     </main>
   );

@@ -126,3 +126,42 @@ export function statusLabel(value: string) {
 export function channelLabel(value: string) {
   return NOTE_CHANNELS.find((s) => s.value === value)?.label ?? value;
 }
+
+export const TICKET_STATUSES = [
+  { value: "todo", label: "To do" },
+  { value: "in_progress", label: "In progress" },
+  { value: "blocked", label: "Blocked" },
+  { value: "done", label: "Done" },
+] as const;
+
+export const TICKET_PRIORITIES = [
+  { value: "urgent", label: "Urgent" },
+  { value: "high", label: "High" },
+  { value: "medium", label: "Medium" },
+  { value: "low", label: "Low" },
+] as const;
+
+export function ticketStatusLabel(value: string) {
+  return TICKET_STATUSES.find((s) => s.value === value)?.label ?? value;
+}
+
+export function priorityLabel(value: string) {
+  return TICKET_PRIORITIES.find((s) => s.value === value)?.label ?? value;
+}
+
+export function timeAgo(iso: string) {
+  const secs = Math.max(0, (Date.now() - new Date(iso).getTime()) / 1000);
+  if (secs < 60) return "just now";
+  const mins = Math.floor(secs / 60);
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+export function initials(name: string) {
+  const parts = name.trim().split(/\s+/);
+  return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?";
+}

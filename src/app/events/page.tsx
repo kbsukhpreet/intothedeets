@@ -13,13 +13,17 @@ export default async function EventsPage() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const { data } = await supabase
-    .from("events")
-    .select("id, name, event_type, event_date, location")
-    .order("event_date", { ascending: true, nullsFirst: false })
-    .order("created_at", { ascending: true });
+  const [{ data }, { data: teamRows }] = await Promise.all([
+    supabase
+      .from("events")
+      .select("id, team_id, name, event_type, event_date, location")
+      .order("event_date", { ascending: true, nullsFirst: false })
+      .order("created_at", { ascending: true }),
+    supabase.from("teams").select("id, name").order("created_at"),
+  ]);
   const events = data ?? [];
   if (events.length === 0) redirect("/events/new");
+  const teams = (teamRows ?? []).filter((t) => events.some((e) => e.team_id === t.id));
 
   return (
     <main className="mx-auto max-w-3xl px-5 py-10">
@@ -33,8 +37,13 @@ export default async function EventsPage() {
         <h1 className="h-display text-4xl">Your events</h1>
         <Link href="/events/new" className="btn-primary">+ New event</Link>
       </div>
+      {teams.map((team) => (
+      <section key={team.id} className="mb-10">
+      {teams.length > 1 && (
+        <h2 className="mb-3 text-xs font-medium uppercase tracking-wider text-muted">{team.name}</h2>
+      )}
       <ul className="space-y-3">
-        {events.map((e) => {
+        {events.filter((e) => e.team_id === team.id).map((e) => {
           const days = e.event_date ? daysUntil(e.event_date) : null;
           return (
             <li key={e.id}>
@@ -61,6 +70,12 @@ export default async function EventsPage() {
           );
         })}
       </ul>
+      </section>
+      ))}
+      <p className="text-sm text-muted">
+        <Link href="/events/new?new_team=1" className="btn-link">Start a new team</Link> for a separate
+        group, like a client.
+      </p>
     </main>
   );
 }

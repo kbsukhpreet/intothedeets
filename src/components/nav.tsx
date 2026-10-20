@@ -19,9 +19,18 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M3 10h18M7 15h3" />
     </>
   ),
-  tasks: (
+  tickets: (
     <>
-      <path d="m4 7 2 2 4-4M4 16l2 2 4-4M13 7h7M13 16h7" />
+      <rect x="3" y="4" width="5" height="16" rx="1.5" />
+      <rect x="10" y="4" width="5" height="10" rx="1.5" />
+      <rect x="17" y="4" width="4" height="13" rx="1.5" />
+    </>
+  ),
+  team: (
+    <>
+      <circle cx="8" cy="9" r="3" />
+      <circle cx="16" cy="9" r="3" />
+      <path d="M2.5 19c.5-3 2.7-4.5 5.5-4.5s5 1.5 5.5 4.5M13 15c.9-.4 1.9-.5 3-.5 2.8 0 5 1.5 5.5 4.5" />
     </>
   ),
   settings: (
@@ -34,10 +43,11 @@ const ICONS: Record<string, React.ReactNode> = {
 
 export const NAV = [
   { href: "/hq", label: "HQ", icon: "home" },
+  { href: "/tickets", label: "Tickets", icon: "tickets" },
   { href: "/vendors", label: "Vendors", icon: "vendors" },
   { href: "/budget", label: "Budget", icon: "budget" },
-  { href: "/tasks", label: "Tasks", icon: "tasks" },
-  { href: "/settings", label: "Settings", icon: "settings" },
+  { href: "/team", label: "Team", icon: "team" },
+  { href: "/settings", label: "Settings", icon: "settings", desktopOnly: true },
 ];
 
 function Icon({ name }: { name: string }) {
@@ -89,7 +99,7 @@ export function BottomNav() {
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-md justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {NAV.map((item) => (
+        {NAV.filter((item) => !item.desktopOnly).map((item) => (
           <Link
             key={item.href}
             href={item.href}

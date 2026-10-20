@@ -137,20 +137,36 @@ export async function deletePayment(form: FormData) {
   refresh();
 }
 
-// ── Tasks ────────────────────────────────────────────────────
+// ── Tickets ──────────────────────────────────────────────────
+
+const STATUSES = ["todo", "in_progress", "blocked", "done"];
+const PRIORITIES = ["low", "medium", "high", "urgent"];
+
+function pick(value: string | null, allowed: string[], fallback: string) {
+  return value && allowed.includes(value) ? value : fallback;
+}
 
 export async function addTask(form: FormData) {
   const { supabase, event, user } = await requireEvent();
-  const { error } = await supabase.from("tasks").insert({
-    event_id: event.id,
-    title: text(form, "title") ?? fail("Give the task a name"),
-    due_date: text(form, "due_date"),
-    vendor_id: text(form, "vendor_id"),
-    notes: text(form, "notes"),
-    created_by: user.id,
-  });
+  const assignee = text(form, "assignee_id");
+  const { data, error } = await supabase
+    .from("tasks")
+    .insert({
+      event_id: text(form, "event_id") ?? event.id,
+      title: text(form, "title") ?? fail("Give the ticket a title"),
+      due_date: text(form, "due_date"),
+      vendor_id: text(form, "vendor_id"),
+      notes: text(form, "notes"),
+      priority: pick(text(form, "priority"), PRIORITIES, "medium"),
+      status: pick(text(form, "status"), STATUSES, "todo"),
+      assignee_id: assignee === "me" ? user.id : assignee,
+      created_by: user.id,
+    })
+    .select("id")
+    .single();
   if (error) fail(error.message);
   refresh();
+  if (text(form, "open_after") === "1") redirect(`/tickets/${data!.id}`);
 }
 
 export async function toggleTask(form: FormData) {
@@ -158,8 +174,47 @@ export async function toggleTask(form: FormData) {
   const done = form.get("done") === "true";
   const { error } = await supabase
     .from("tasks")
-    .update({ done, done_at: done ? new Date().toISOString() : null })
-    .eq("id", text(form, "id") ?? fail("Missing task"));
+    .update({ status: done ? "done" : "todo" })
+    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function setTicketStatus(form: FormData) {
+  const { supabase } = await requireEvent();
+  const status = pick(text(form, "status"), STATUSES, "todo");
+  const { error } = await supabase
+    .from("tasks")
+    .update({ status })
+    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function setTicketAssignee(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("tasks")
+    .update({ assignee_id: text(form, "assignee_id") })
+    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function updateTicket(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("tasks")
+    .update({
+      title: text(form, "title") ?? fail("Give the ticket a title"),
+      notes: text(form, "notes"),
+      status: pick(text(form, "status"), STATUSES, "todo"),
+      priority: pick(text(form, "priority"), PRIORITIES, "medium"),
+      assignee_id: text(form, "assignee_id"),
+      due_date: text(form, "due_date"),
+      vendor_id: text(form, "vendor_id"),
+    })
+    .eq("id", text(form, "id") ?? fail("Missing ticket"));
   if (error) fail(error.message);
   refresh();
 }
@@ -169,7 +224,40 @@ export async function deleteTask(form: FormData) {
   const { error } = await supabase
     .from("tasks")
     .delete()
-    .eq("id", text(form, "id") ?? fail("Missing task"));
+    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+  if (error) fail(error.message);
+  refresh();
+  const back = text(form, "back");
+  if (back?.startsWith("/")) redirect(back);
+}
+
+export async function addComment(form: FormData) {
+  const { supabase, user } = await requireEvent();
+  const taskId = text(form, "task_id") ?? fail("Missing ticket");
+  const { data: task } = await supabase.from("tasks").select("event_id").eq("id", taskId).single();
+  if (!task) fail("Ticket not found");
+  const { error } = await supabase.from("ticket_comments").insert({
+    task_id: taskId,
+    event_id: task.event_id,
+    author_id: user.id,
+    body: text(form, "body") ?? fail("Write an update first"),
+  });
+  if (error) fail(error.message);
+
+  // Posting an update can also move the ticket along.
+  const status = text(form, "status");
+  if (status && STATUSES.includes(status)) {
+    await supabase.from("tasks").update({ status }).eq("id", taskId);
+  }
+  refresh();
+}
+
+export async function deleteComment(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("ticket_comments")
+    .delete()
+    .eq("id", text(form, "id") ?? fail("Missing update"));
   if (error) fail(error.message);
   refresh();
 }
@@ -218,23 +306,38 @@ export async function deleteEvent(form: FormData) {
   redirect("/events");
 }
 
-// ── Collaborator invites ─────────────────────────────────────
+// ── Teams ────────────────────────────────────────────────────
 
-export async function createInvite() {
-  const { supabase, event, user } = await requireEvent();
+export async function renameTeam(form: FormData) {
+  const { supabase, team } = await requireEvent();
   const { error } = await supabase
-    .from("event_invites")
-    .insert({ event_id: event.id, invited_by: user.id });
+    .from("teams")
+    .update({ name: text(form, "name") ?? fail("Give your team a name") })
+    .eq("id", team.id);
   if (error) fail(error.message);
   refresh();
 }
 
-export async function revokeInvite(form: FormData) {
-  const { supabase } = await requireEvent();
-  const { error } = await supabase
-    .from("event_invites")
-    .delete()
-    .eq("id", text(form, "id") ?? fail("Missing invite"));
+export async function resetInviteLink() {
+  const { supabase, team } = await requireEvent();
+  const { error } = await supabase.rpc("reset_team_invite", { p_team_id: team.id });
   if (error) fail(error.message);
   refresh();
+}
+
+export async function removeMember(form: FormData) {
+  const { supabase, team, user } = await requireEvent();
+  const userId = text(form, "user_id") ?? fail("Missing person");
+  if (userId === team.created_by) fail("The team's creator can't be removed.");
+  const { error } = await supabase
+    .from("team_members")
+    .delete()
+    .eq("team_id", team.id)
+    .eq("user_id", userId);
+  if (error) fail(error.message);
+  refresh();
+  if (userId === user.id) {
+    (await cookies()).delete(CURRENT_EVENT_COOKIE);
+    redirect("/events");
+  }
 }

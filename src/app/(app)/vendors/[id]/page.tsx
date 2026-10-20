@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { requireEvent } from "@/lib/event";
+import { requireEvent, teamPeople } from "@/lib/event";
+import { Avatar } from "@/components/avatar";
 import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO } from "@/lib/format";
 import { Empty, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
@@ -11,7 +12,6 @@ import {
   addTask,
   addVendorNote,
   deletePayment,
-  deleteTask,
   deleteVendor,
   deleteVendorNote,
   togglePayment,
@@ -21,10 +21,11 @@ import {
 
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, event } = await requireEvent();
+  const { supabase, event, user } = await requireEvent();
 
   const { data: vendor } = await supabase.from("vendors").select("*").eq("id", id).eq("event_id", event.id).maybeSingle();
   if (!vendor) notFound();
+  const people = await teamPeople(supabase, event.team_id, user.id);
 
   const [{ data: notes }, { data: payments }, { data: tasks }] = await Promise.all([
     supabase
@@ -40,9 +41,8 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
       .order("due_date", { ascending: true, nullsFirst: false }),
     supabase
       .from("tasks")
-      .select("id, title, due_date, done")
+      .select("id, number, title, due_date, status, assignee_id")
       .eq("vendor_id", id)
-      .order("done")
       .order("due_date", { ascending: true, nullsFirst: false }),
   ]);
 
@@ -200,43 +200,54 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
             </form>
           </section>
 
-          {/* Tasks */}
+          {/* Tickets */}
           <section className="card p-5">
-            <h2 className="h-display text-xl">To-dos for this vendor</h2>
+            <h2 className="h-display text-xl">Tickets for this vendor</h2>
             <ul className="mt-3 space-y-1">
-              {(tasks ?? []).map((t) => (
-                <li key={t.id} className="flex items-center gap-3 py-1.5">
-                  <form action={toggleTask}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <input type="hidden" name="done" value={String(!t.done)} />
-                    <button
-                      aria-label={t.done ? "Mark not done" : "Mark done"}
-                      className={`flex h-5 w-5 items-center justify-center rounded-full border-2 text-[11px] ${
-                        t.done ? "border-sage bg-sage text-white" : "border-line hover:border-accent"
-                      }`}
-                    >
-                      {t.done ? "✓" : ""}
-                    </button>
-                  </form>
-                  <span className={`flex-1 text-sm ${t.done ? "text-muted line-through" : ""}`}>
-                    {t.title}
-                    {t.due_date && !t.done && (
-                      <span className={`ml-2 text-xs ${t.due_date < today ? "text-amber" : "text-muted"}`}>
-                        {relativeDue(t.due_date)}
-                      </span>
-                    )}
-                  </span>
-                  <form action={deleteTask}>
-                    <input type="hidden" name="id" value={t.id} />
-                    <button aria-label="Delete task" className="text-muted hover:text-accent">×</button>
-                  </form>
-                </li>
-              ))}
+              {(tasks ?? []).map((t) => {
+                const done = t.status === "done";
+                const person = t.assignee_id ? people.find((p) => p.id === t.assignee_id) : null;
+                return (
+                  <li key={t.id} className="flex items-center gap-3 py-1.5">
+                    <form action={toggleTask}>
+                      <input type="hidden" name="id" value={t.id} />
+                      <input type="hidden" name="done" value={String(!done)} />
+                      <button
+                        aria-label={done ? "Mark not done" : "Mark done"}
+                        className={`flex h-5 w-5 items-center justify-center rounded-full border-2 text-[11px] ${
+                          done ? "border-sage bg-sage text-white" : "border-line hover:border-accent"
+                        }`}
+                      >
+                        {done ? "✓" : ""}
+                      </button>
+                    </form>
+                    <Link href={`/tickets/${t.id}`} className={`min-w-0 flex-1 truncate text-sm hover:text-accent ${done ? "text-muted line-through" : ""}`}>
+                      <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>
+                      {t.title}
+                      {t.due_date && !done && (
+                        <span className={`ml-2 text-xs ${t.due_date < today ? "text-amber" : "text-muted"}`}>
+                          {relativeDue(t.due_date)}
+                        </span>
+                      )}
+                    </Link>
+                    <Avatar id={person?.id ?? null} name={person?.name ?? null} size="sm" />
+                  </li>
+                );
+              })}
             </ul>
-            <form action={addTask} className="mt-3 flex gap-2">
+            <form action={addTask} className="mt-3 space-y-2">
               <input type="hidden" name="vendor_id" value={id} />
+              <input type="hidden" name="event_id" value={event.id} />
               <input name="title" required placeholder="Ask about candles on every table" className="input" />
-              <SubmitButton className="btn-ghost" pendingText="…">Add</SubmitButton>
+              <div className="flex gap-2">
+                <select name="assignee_id" defaultValue="" className="input" aria-label="Assign to">
+                  <option value="">Unassigned</option>
+                  {people.map((p) => (
+                    <option key={p.id} value={p.id}>{p.id === user.id ? `${p.name} (me)` : p.name}</option>
+                  ))}
+                </select>
+                <SubmitButton className="btn-ghost" pendingText="…">Add</SubmitButton>
+              </div>
             </form>
           </section>
         </div>

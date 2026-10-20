@@ -5,20 +5,31 @@ import { CURRENT_EVENT_COOKIE } from "@/lib/event";
 import { Logo } from "@/components/logo";
 import { SubmitButton } from "@/components/submit-button";
 
-async function accept(form: FormData) {
+async function join(form: FormData) {
   "use server";
   const token = String(form.get("token") ?? "");
   const supabase = await createClient();
-  const { data, error } = await supabase.rpc("accept_invite", { p_token: token });
+  const { data: teamId, error } = await supabase.rpc("join_team", { p_token: token });
   if (error) redirect(`/invite/${token}?error=${encodeURIComponent(error.message)}`);
-  (await cookies()).set(CURRENT_EVENT_COOKIE, String(data), {
+
+  // Open one of the team's events, or let them create the first one.
+  const { data: firstEvent } = await supabase
+    .from("events")
+    .select("id")
+    .eq("team_id", teamId)
+    .order("event_date", { ascending: true, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (!firstEvent) redirect(`/events/new?team=${teamId}`);
+
+  (await cookies()).set(CURRENT_EVENT_COOKIE, firstEvent.id, {
     path: "/",
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     maxAge: 60 * 60 * 24 * 365,
   });
-  redirect("/hq");
+  redirect("/tickets?who=me");
 }
 
 export default async function InvitePage({
@@ -32,7 +43,7 @@ export default async function InvitePage({
   const { error } = await searchParams;
   const supabase = await createClient();
 
-  const { data } = await supabase.rpc("invite_preview", { p_token: token });
+  const { data } = await supabase.rpc("team_invite_preview", { p_token: token });
   const invite = Array.isArray(data) ? data[0] : null;
 
   return (
@@ -45,28 +56,31 @@ export default async function InvitePage({
           <>
             <h1 className="h-display text-3xl">Link not found</h1>
             <p className="mt-2 text-sm text-muted">
-              This invite link isn&apos;t valid. Ask whoever sent it to create a new one from Settings.
+              This invite link isn&apos;t valid anymore. Ask whoever sent it for the current link
+              from their Team page.
             </p>
           </>
-        ) : invite.used ? (
+        ) : invite.already_member ? (
           <>
-            <h1 className="h-display text-3xl">Already used</h1>
-            <p className="mt-2 text-sm text-muted">
-              This link has already been used. Ask whoever sent it for a fresh one.
-            </p>
+            <h1 className="h-display text-3xl">You&apos;re already on {invite.team_name}</h1>
+            <a href="/hq" className="btn-primary mt-6 w-full">Go to my HQ</a>
           </>
         ) : (
           <>
-            <p className="text-sm uppercase tracking-[0.2em] text-accent">You&apos;re invited to help plan</p>
-            <h1 className="h-display mt-3 text-3xl">{invite.event_name}</h1>
-            <p className="mt-1 text-sm text-muted">{invite.event_type}</p>
+            <p className="text-sm uppercase tracking-[0.2em] text-accent">You&apos;re invited</p>
+            <h1 className="h-display mt-3 text-3xl">Join {invite.team_name}</h1>
+            <p className="mt-2 text-sm text-muted">
+              {invite.inviter_name ? `${invite.inviter_name} invited you` : "You've been invited"} to plan
+              together on Into the Deets. {Number(invite.member_count)}{" "}
+              {Number(invite.member_count) === 1 ? "person is" : "people are"} on the team.
+            </p>
             {error && (
               <p className="mt-4 rounded-lg bg-accent-soft px-3 py-2 text-sm text-accent-dark">{error}</p>
             )}
-            <form action={accept} className="mt-6">
+            <form action={join} className="mt-6">
               <input type="hidden" name="token" value={token} />
               <SubmitButton className="btn-primary w-full" pendingText="Joining…">
-                Join this event
+                Join the team
               </SubmitButton>
             </form>
           </>
