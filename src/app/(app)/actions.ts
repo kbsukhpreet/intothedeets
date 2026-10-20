@@ -348,7 +348,12 @@ export async function setViewMode(form: FormData) {
   const { supabase, user } = await requireEvent();
   const mode = text(form, "view_mode") === "personal" ? "personal" : "team";
   const { error } = await supabase.from("profiles").update({ view_mode: mode }).eq("id", user.id);
-  if (error) fail(error.message);
+  if (error) {
+    const hint = /view_mode/.test(error.message)
+      ? "The database is missing upgrade 4 (004_view_mode.sql). Run it in Supabase, then try again."
+      : error.message;
+    redirect(`/settings?error=${encodeURIComponent(hint)}`);
+  }
   refresh();
   redirect(`/settings?switched=${mode}`);
 }

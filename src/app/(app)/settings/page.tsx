@@ -9,9 +9,9 @@ import { deleteEvent, setViewMode, updateEvent } from "../actions";
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ switched?: string }>;
+  searchParams: Promise<{ switched?: string; error?: string }>;
 }) {
-  const { switched } = await searchParams;
+  const { switched, error } = await searchParams;
   const { event, user, team, mode } = await requireEvent();
 
   const isCreator = event.created_by === user.id;
@@ -20,7 +20,11 @@ export default async function SettingsPage({
     <div className="space-y-8">
       <PageHeader title="Settings" />
 
-      {switched && (
+      {error && (
+        <div className="rounded-2xl bg-accent-soft px-5 py-4 text-sm text-accent-dark">{error}</div>
+      )}
+
+      {switched && !error && (
         <div className="rounded-2xl bg-sage-soft px-5 py-4 text-sm text-sage">
           {switched === "team" ? (
             <>
