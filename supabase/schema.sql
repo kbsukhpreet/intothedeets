@@ -670,3 +670,39 @@ grant execute on function public.create_event(uuid,text,text,date,text,numeric) 
 grant execute on function public.join_team(text) to authenticated;
 grant execute on function public.team_invite_preview(text) to authenticated;
 grant execute on function public.reset_team_invite(uuid) to authenticated;
+
+
+-- ═════════════════════════════════════════════════════════════
+-- Version 4: personal or team view
+-- ═════════════════════════════════════════════════════════════
+
+alter table public.profiles
+  add column if not exists view_mode text not null default 'team'
+  check (view_mode in ('personal', 'team'));
+
+-- Accounts that chose a view at sign-up keep that choice.
+update public.profiles p
+set view_mode = u.raw_user_meta_data ->> 'view_mode'
+from auth.users u
+where u.id = p.id and u.raw_user_meta_data ->> 'view_mode' in ('personal', 'team');
+
+-- Save the choice from the sign-up form on every new account.
+create or replace function public.handle_new_user()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  insert into public.profiles (id, full_name, email, purpose, view_mode)
+  values (
+    new.id,
+    new.raw_user_meta_data ->> 'full_name',
+    new.email,
+    new.raw_user_meta_data ->> 'purpose',
+    case when new.raw_user_meta_data ->> 'view_mode' = 'personal' then 'personal' else 'team' end
+  )
+  on conflict (id) do nothing;
+  return new;
+end;
+$$;

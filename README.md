@@ -6,7 +6,8 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 
 ## What's in it
 
-- **Sign up** with full name, email, what you're using it for, and a password (no email confirmation)
+- **Sign up** with full name, email, what you're using it for, a personal or team view, and a password (no email confirmation)
+- **Personal or team view:** "Just me" shows a simple task/vendor/budget planner; "With a team" shows the Jira-style tickets. One-click switch in Settings; nothing is lost when switching
 - **Teams** (like Jira): create a team, share one invite link, and everyone joins with their own account. A team can run many events; people can be on several teams
 - **Tickets:** numbered (#12), with assignee, status (To do / In progress / Blocked / Done), priority, due date, description, linked vendor, and a thread of progress updates
 - **Tickets dashboard:** progress for each person, a board and list view, and filters for me / a teammate / unassigned / an event

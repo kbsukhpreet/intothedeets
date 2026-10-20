@@ -10,7 +10,9 @@ import { addComment, deleteComment, deleteTask, updateTicket } from "../../actio
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, user, events, teams } = await requireEvent();
+  const { supabase, user, events, teams, mode } = await requireEvent();
+  const personal = mode === "personal";
+  const noun = personal ? "task" : "ticket";
 
   const { data: t } = await supabase
     .from("tasks")
@@ -42,22 +44,24 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-6">
       <Link href="/tickets" className="text-sm text-muted hover:text-ink">
-        ← All tickets
+        ← All {noun}s
       </Link>
 
       <div>
         <p className="text-sm text-muted">
-          <span className="tabular-nums">#{t.number}</span> · {event.name}
-          {team ? ` · ${team.name}` : ""}
+          {!personal && <span className="tabular-nums">#{t.number} · </span>}{event.name}
+          {team && !personal ? ` · ${team.name}` : ""}
         </p>
         <h1 className="h-display mt-1 text-3xl sm:text-4xl">{t.title}</h1>
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           <StatusPill status={t.status} />
           <PriorityTag priority={t.priority} />
-          <span className="flex items-center gap-1.5 text-muted">
-            <Avatar id={assignee?.id ?? null} name={assignee?.name ?? null} size="sm" />
-            {assignee ? assignee.name : "Unassigned"}
-          </span>
+          {!personal && (
+            <span className="flex items-center gap-1.5 text-muted">
+              <Avatar id={assignee?.id ?? null} name={assignee?.name ?? null} size="sm" />
+              {assignee ? assignee.name : "Unassigned"}
+            </span>
+          )}
           {t.due_date && (
             <span className={late ? "text-amber" : "text-muted"}>
               Due {t.status === "done" ? prettyDate(t.due_date, true) : relativeDue(t.due_date)}
@@ -74,9 +78,11 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Updates */}
         <section className="card p-5">
-          <h2 className="h-display text-2xl">Progress updates</h2>
+          <h2 className="h-display text-2xl">{personal ? "Notes & updates" : "Progress updates"}</h2>
           <p className="mt-1 text-sm text-muted">
-            Post what you&apos;ve done, what you heard back, or what you&apos;re stuck on.
+            {personal
+              ? "Keep a running log: who you called, what they said, what's next."
+              : "Post what you've done, what you heard back, or what you're stuck on."}
           </p>
 
           <ol className="mt-5 space-y-5">
@@ -155,6 +161,9 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                 </select>
               </div>
             </div>
+            {personal ? (
+              <input type="hidden" name="assignee_id" value={t.assignee_id ?? ""} />
+            ) : (
             <div>
               <label className="label" htmlFor="assignee_id">Assigned to</label>
               <select id="assignee_id" name="assignee_id" defaultValue={t.assignee_id ?? ""} className="input">
@@ -164,6 +173,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                 ))}
               </select>
             </div>
+            )}
             <div>
               <label className="label" htmlFor="due_date">Due date</label>
               <input id="due_date" name="due_date" type="date" defaultValue={t.due_date ?? ""} className="input" />
@@ -192,7 +202,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           </form>
 
           <div className="mt-5 space-y-1 border-t border-line pt-4 text-xs text-muted">
-            <p>Created {timeAgo(t.created_at)}{creator ? ` by ${creator.name}` : ""}</p>
+            <p>Created {timeAgo(t.created_at)}{creator && !personal ? ` by ${creator.name}` : ""}</p>
             <p>Last updated {timeAgo(t.updated_at)}</p>
             {t.done_at && <p>Completed {timeAgo(t.done_at)}</p>}
           </div>
@@ -200,8 +210,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           <form action={deleteTask} className="mt-4">
             <input type="hidden" name="id" value={t.id} />
             <input type="hidden" name="back" value="/tickets" />
-            <ConfirmButton message={`Delete ticket #${t.number}? This can't be undone.`} className="text-xs text-muted hover:text-accent">
-              Delete ticket
+            <ConfirmButton message={personal ? `Delete "${t.title}"? This can't be undone.` : `Delete ticket #${t.number}? This can't be undone.`} className="text-xs text-muted hover:text-accent">
+              Delete {noun}
             </ConfirmButton>
           </form>
         </aside>

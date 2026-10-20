@@ -12,6 +12,12 @@ async function join(form: FormData) {
   const { data: teamId, error } = await supabase.rpc("join_team", { p_token: token });
   if (error) redirect(`/invite/${token}?error=${encodeURIComponent(error.message)}`);
 
+  // Joining a team means they'll want the team view.
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (user) await supabase.from("profiles").update({ view_mode: "team" }).eq("id", user.id);
+
   // Open one of the team's events, or let them create the first one.
   const { data: firstEvent } = await supabase
     .from("events")

@@ -341,3 +341,14 @@ export async function removeMember(form: FormData) {
     redirect("/events");
   }
 }
+
+// ── Personal or team view ────────────────────────────────────
+
+export async function setViewMode(form: FormData) {
+  const { supabase, user } = await requireEvent();
+  const mode = text(form, "view_mode") === "personal" ? "personal" : "team";
+  const { error } = await supabase.from("profiles").update({ view_mode: mode }).eq("id", user.id);
+  if (error) fail(error.message);
+  refresh();
+  redirect(`/settings?switched=${mode}`);
+}

@@ -20,13 +20,20 @@ export default async function NewEventPage({
   const [{ count }, { data: teams }, { data: profile }] = await Promise.all([
     supabase.from("events").select("id", { count: "exact", head: true }),
     supabase.from("teams").select("id, name").order("created_at"),
-    supabase.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+    supabase.from("profiles").select("full_name, view_mode").eq("id", user.id).maybeSingle(),
   ]);
   const isFirst = !count;
   const fullName = profile?.full_name ?? "";
   const firstName = fullName.split(" ")[0];
   const lastName = fullName.split(" ").length > 1 ? fullName.split(" ").slice(-1)[0] : "";
-  const suggestedTeamName = lastName ? `The ${lastName} Family` : firstName ? `${firstName}'s team` : "My team";
+  const personal = profile?.view_mode === "personal";
+  const suggestedTeamName = personal
+    ? `${firstName || "My"}'s events`
+    : lastName
+      ? `The ${lastName} Family`
+      : firstName
+        ? `${firstName}'s team`
+        : "My team";
   const joinedTeam = (teams ?? []).find((t) => t.id === team);
 
   return (
@@ -62,6 +69,7 @@ export default async function NewEventPage({
           defaultTeamId={team}
           suggestedTeamName={new_team ? "" : suggestedTeamName}
           forceNewTeam={Boolean(new_team)}
+          personal={personal}
         />
       </div>
     </main>

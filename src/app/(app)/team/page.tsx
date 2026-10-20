@@ -9,7 +9,7 @@ import { Avatar } from "@/components/avatar";
 import { removeMember, renameTeam, resetInviteLink } from "../actions";
 
 export default async function TeamPage() {
-  const { supabase, user, team, teams, events } = await requireEvent();
+  const { supabase, user, team, teams, events, mode } = await requireEvent();
   const people = await teamPeople(supabase, team.id, user.id);
   const teamEventIds = events.filter((e) => e.team_id === team.id).map((e) => e.id);
 
@@ -31,6 +31,14 @@ export default async function TeamPage() {
         title={team.name}
         subtitle={`${people.length} ${people.length === 1 ? "person" : "people"} · ${teamEventIds.length} ${teamEventIds.length === 1 ? "event" : "events"}. Everyone here sees every event on this team and can be assigned tickets.`}
       />
+
+      {mode === "personal" && (
+        <div className="rounded-2xl bg-amber-soft px-5 py-4 text-sm text-amber">
+          You&apos;re in personal view, so tickets and assignments are hidden.{" "}
+          <Link href="/settings" className="font-medium underline">Switch to team view</Link> to plan
+          together.
+        </div>
+      )}
 
       <section className="card p-6">
         <h2 className="h-display text-2xl">Invite people</h2>

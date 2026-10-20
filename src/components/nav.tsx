@@ -26,6 +26,11 @@ const ICONS: Record<string, React.ReactNode> = {
       <rect x="17" y="4" width="4" height="13" rx="1.5" />
     </>
   ),
+  tasks: (
+    <>
+      <path d="m4 7 2 2 4-4M4 16l2 2 4-4M13 7h7M13 16h7" />
+    </>
+  ),
   team: (
     <>
       <circle cx="8" cy="9" r="3" />
@@ -47,8 +52,20 @@ export const NAV = [
   { href: "/vendors", label: "Vendors", icon: "vendors" },
   { href: "/budget", label: "Budget", icon: "budget" },
   { href: "/team", label: "Team", icon: "team" },
-  { href: "/settings", label: "Settings", icon: "settings", desktopOnly: true },
+  { href: "/settings", label: "Settings", icon: "settings" },
 ];
+
+type Mode = "personal" | "team";
+
+/** The menu adapts to the chosen view: personal hides Team and calls tickets "Tasks". */
+function itemsFor(mode: Mode, mobile: boolean) {
+  return NAV.filter((item) => {
+    if (mode === "personal") return item.href !== "/team";
+    return mobile ? item.href !== "/settings" : true;
+  }).map((item) =>
+    item.href === "/tickets" && mode === "personal" ? { ...item, label: "Tasks", icon: "tasks" } : item
+  );
+}
 
 function Icon({ name }: { name: string }) {
   return (
@@ -72,11 +89,11 @@ function useIsActive() {
   return (href: string) => pathname === href || pathname.startsWith(href + "/");
 }
 
-export function SideNav() {
+export function SideNav({ mode }: { mode: Mode }) {
   const isActive = useIsActive();
   return (
     <nav className="space-y-1">
-      {NAV.map((item) => (
+      {itemsFor(mode, false).map((item) => (
         <Link
           key={item.href}
           href={item.href}
@@ -94,12 +111,12 @@ export function SideNav() {
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ mode }: { mode: Mode }) {
   const isActive = useIsActive();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur md:hidden">
       <div className="mx-auto flex max-w-md justify-around px-2 pb-[env(safe-area-inset-bottom)]">
-        {NAV.filter((item) => !item.desktopOnly).map((item) => (
+        {itemsFor(mode, true).map((item) => (
           <Link
             key={item.href}
             href={item.href}

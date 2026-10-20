@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { ACCOUNT_PURPOSES } from "@/lib/format";
 import { Logo } from "@/components/logo";
 import { SubmitButton } from "@/components/submit-button";
+import { ViewModeChoice } from "@/components/view-mode-choice";
 import { logIn, signUp } from "./actions";
 
 type Search = Promise<{
@@ -14,6 +15,7 @@ type Search = Promise<{
   full_name?: string;
   email?: string;
   purpose?: string;
+  view_mode?: string;
 }>;
 
 export default async function LoginPage({ searchParams }: { searchParams: Search }) {
@@ -80,6 +82,9 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
                 className="input"
               />
             </div>
+            <ViewModeChoice
+              defaultValue={params.view_mode ?? (next.startsWith("/invite/") ? "team" : undefined)}
+            />
             <div>
               <label className="label" htmlFor="purpose">What brings you to Into the Deets?</label>
               <select

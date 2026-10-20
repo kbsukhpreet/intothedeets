@@ -7,7 +7,7 @@ import { EventSwitcher } from "@/components/event-switcher";
 import { logOut } from "@/app/login/actions";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
-  const { event, events, team } = await requireEvent();
+  const { event, events, team, mode } = await requireEvent();
   const days = event.event_date ? daysUntil(event.event_date) : null;
   const switcherEvents = events.map((e) => ({ id: e.id, name: e.name }));
 
@@ -18,7 +18,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           <Logo href="/hq" />
         </div>
         <div className="mt-8 px-2">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-accent">{team.name} · {event.event_type}</p>
+          <p className="text-[11px] font-medium uppercase tracking-wider text-accent">{mode === "team" ? `${team.name} · ` : ""}{event.event_type}</p>
           <p className="h-display mt-0.5 text-lg leading-tight">{event.name}</p>
           {days !== null && days >= 0 && (
             <p className="mt-0.5 text-sm text-muted">
@@ -30,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
           </div>
         </div>
         <div className="mt-6 flex-1">
-          <SideNav />
+          <SideNav mode={mode} />
         </div>
         <form action={logOut}>
           <button className="px-3 text-sm text-muted hover:text-ink">Log out</button>
@@ -60,7 +60,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </main>
       </div>
 
-      <BottomNav />
+      <BottomNav mode={mode} />
     </div>
   );
 }

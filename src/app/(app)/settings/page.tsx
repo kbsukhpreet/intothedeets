@@ -3,19 +3,78 @@ import Link from "next/link";
 import { EVENT_TYPES } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { deleteEvent, updateEvent } from "../actions";
+import { VIEW_MODES, ModeIcon } from "@/components/view-mode-choice";
+import { deleteEvent, setViewMode, updateEvent } from "../actions";
 
-export default async function SettingsPage() {
-  const { event, user, team } = await requireEvent();
+export default async function SettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ switched?: string }>;
+}) {
+  const { switched } = await searchParams;
+  const { event, user, team, mode } = await requireEvent();
 
   const isCreator = event.created_by === user.id;
 
   return (
     <div className="space-y-8">
-      <PageHeader title="Settings" subtitle="This event's details." />
+      <PageHeader title="Settings" />
+
+      {switched && (
+        <div className="rounded-2xl bg-sage-soft px-5 py-4 text-sm text-sage">
+          {switched === "team" ? (
+            <>
+              <strong>You&apos;re now in team view.</strong> Your tasks are now tickets you can assign.{" "}
+              <Link href="/team" className="underline">Invite your team</Link> to get started.
+            </>
+          ) : (
+            <>
+              <strong>You&apos;re now in personal view.</strong> Everything you had is still here, just
+              simpler. Anyone on your team keeps access to shared events.
+            </>
+          )}
+        </div>
+      )}
+
+      <section className="card p-6">
+        <h2 className="h-display text-2xl">How you plan</h2>
+        <p className="mt-1 text-sm text-muted">
+          Switch anytime. Nothing is deleted. Your tasks, vendors and budget stay exactly the same.
+        </p>
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
+          {VIEW_MODES.map((m) => {
+            const current = m.value === mode;
+            return (
+              <form key={m.value} action={setViewMode}>
+                <input type="hidden" name="view_mode" value={m.value} />
+                <button
+                  disabled={current}
+                  className={`relative flex h-full w-full flex-col items-start gap-1.5 rounded-xl border-2 p-4 text-left transition ${
+                    current
+                      ? "cursor-default border-accent bg-accent-soft/50"
+                      : "border-line bg-white hover:border-accent/50"
+                  }`}
+                >
+                  <span className="text-accent"><ModeIcon mode={m.value} /></span>
+                  <span className="font-medium">{m.title}</span>
+                  <span className="text-xs leading-relaxed text-muted">{m.body}</span>
+                  <span
+                    className={`mt-2 rounded-full px-3 py-1 text-xs font-medium ${
+                      current ? "bg-accent text-white" : "border border-line bg-white text-accent"
+                    }`}
+                  >
+                    {current ? "✓ Current view" : `Switch to ${m.value === "team" ? "team" : "personal"} view`}
+                  </span>
+                </button>
+              </form>
+            );
+          })}
+        </div>
+      </section>
 
       <section className="card p-6">
         <h2 className="h-display text-2xl">Event details</h2>
+        <p className="mt-1 text-sm text-muted">For {event.name}.</p>
         <form action={updateEvent} className="mt-5 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2">
             <label className="label" htmlFor="name">Event name</label>
@@ -53,6 +112,7 @@ export default async function SettingsPage() {
         </form>
       </section>
 
+      {mode === "team" && (
       <section className="card flex flex-wrap items-center justify-between gap-3 p-6">
         <div>
           <h2 className="h-display text-2xl">Who&apos;s planning</h2>
@@ -62,6 +122,7 @@ export default async function SettingsPage() {
         </div>
         <Link href="/team" className="btn-ghost">Manage team &amp; invites</Link>
       </section>
+      )}
 
       {isCreator && (
         <details className="card group p-6">

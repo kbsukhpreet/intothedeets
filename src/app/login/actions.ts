@@ -50,13 +50,15 @@ export async function signUp(form: FormData) {
   const fullName = String(form.get("full_name") ?? "").trim().replace(/\s+/g, " ");
   const email = String(form.get("email") ?? "").trim();
   const purpose = String(form.get("purpose") ?? "");
+  const viewMode = String(form.get("view_mode") ?? "");
   const password = String(form.get("password") ?? "");
   const confirm = String(form.get("confirm_password") ?? "");
 
-  const keep = { full_name: fullName, email, purpose };
+  const keep = { full_name: fullName, email, purpose, view_mode: viewMode };
   const err = (error: string) => redirect(back("signup", next, { error, ...keep }));
 
   if (fullName.length < 2) err("Please enter your full name.");
+  if (viewMode !== "personal" && viewMode !== "team") err("Choose whether you're planning on your own or with a team.");
   if (!ACCOUNT_PURPOSES.some((p) => p.value === purpose)) err("Please tell us what you'll use Into the Deets for.");
   if (password.length < 8) err("Use at least 8 characters for your password.");
   if (password !== confirm) err("The two passwords don't match.");
@@ -66,7 +68,7 @@ export async function signUp(form: FormData) {
     email,
     password,
     options: {
-      data: { full_name: fullName, purpose },
+      data: { full_name: fullName, purpose, view_mode: viewMode },
       emailRedirectTo: `${await siteUrl()}/auth/callback?next=${encodeURIComponent(next)}`,
     },
   });

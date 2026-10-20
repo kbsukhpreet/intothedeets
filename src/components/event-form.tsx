@@ -8,6 +8,7 @@ export function EventForm({
   defaultTeamId,
   suggestedTeamName,
   forceNewTeam,
+  personal,
 }: {
   action: (form: FormData) => Promise<void>;
   submitLabel: string;
@@ -15,12 +16,19 @@ export function EventForm({
   defaultTeamId?: string;
   suggestedTeamName: string;
   forceNewTeam?: boolean;
+  personal?: boolean;
 }) {
   const needsTeam = forceNewTeam || teams.length === 0;
 
   return (
     <form action={action} className="card space-y-5 p-6">
-      {needsTeam ? (
+      {needsTeam && personal && !forceNewTeam ? (
+        <>
+          {/* Personal view: a private team is created quietly behind the scenes. */}
+          <input type="hidden" name="team_id" value="new" />
+          <input type="hidden" name="team_name" value={suggestedTeamName} />
+        </>
+      ) : needsTeam ? (
         <div className="rounded-xl bg-paper p-4">
           <input type="hidden" name="team_id" value="new" />
           <label className="label" htmlFor="team_name">Team name</label>

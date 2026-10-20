@@ -20,6 +20,8 @@ export type Team = { id: string; name: string; invite_token: string; created_by:
 
 export type Person = { id: string; name: string; email: string | null; role: string };
 
+export type ViewMode = "personal" | "team";
+
 /**
  * Returns the logged-in user, their teams and events, the event they're
  * currently working on, and that event's team.
@@ -32,13 +34,14 @@ export async function requireEvent() {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
 
-  const [{ data: eventRows }, { data: teamRows }] = await Promise.all([
+  const [{ data: eventRows }, { data: teamRows }, { data: profile }] = await Promise.all([
     supabase
       .from("events")
       .select("id, team_id, name, event_type, event_date, location, total_budget, created_by")
       .order("event_date", { ascending: true, nullsFirst: false })
       .order("created_at", { ascending: true }),
     supabase.from("teams").select("id, name, invite_token, created_by").order("created_at"),
+    supabase.from("profiles").select("full_name, view_mode").eq("id", user.id).maybeSingle(),
   ]);
 
   const events = (eventRows ?? []) as EventRow[];
@@ -49,7 +52,10 @@ export async function requireEvent() {
   const event = events.find((e) => e.id === chosen) ?? events[0];
   const team = teams.find((t) => t.id === event.team_id) ?? teams[0];
 
-  return { supabase, user, events, event, teams, team };
+  const mode: ViewMode = profile?.view_mode === "personal" ? "personal" : "team";
+  const fullName: string = profile?.full_name ?? "";
+
+  return { supabase, user, events, event, teams, team, mode, fullName };
 }
 
 type Supabase = Awaited<ReturnType<typeof createClient>>;

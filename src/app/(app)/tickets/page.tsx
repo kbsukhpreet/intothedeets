@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { AutoSubmitSelect, FilterSelect } from "@/components/auto-submit-select";
 import { PriorityTag, ProgressBar, STATUS_STYLES, StatusPill } from "@/components/ticket-bits";
 import { addTask, setTicketAssignee, setTicketStatus } from "../actions";
+import { PersonalTasks } from "./personal-tasks";
 
 type Ticket = {
   id: string;
@@ -21,13 +22,16 @@ type Ticket = {
   updated_at: string;
 };
 
-type Search = Promise<{ view?: string; who?: string; event?: string }>;
+type Search = Promise<{ view?: string; who?: string; event?: string; show?: string }>;
 
 const PRIORITY_RANK: Record<string, number> = { urgent: 0, high: 1, medium: 2, low: 3 };
 
 export default async function TicketsPage({ searchParams }: { searchParams: Search }) {
   const params = await searchParams;
-  const { supabase, user, team, events, event: currentEvent } = await requireEvent();
+  const { supabase, user, team, events, event: currentEvent, mode } = await requireEvent();
+  if (mode === "personal") {
+    return <PersonalTasks supabase={supabase} event={currentEvent} showDone={params.show === "done"} />;
+  }
   const teamEvents = events.filter((e) => e.team_id === team.id);
   const people = await teamPeople(supabase, team.id, user.id);
 

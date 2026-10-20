@@ -21,7 +21,8 @@ import {
 
 export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { supabase, event, user } = await requireEvent();
+  const { supabase, event, user, mode } = await requireEvent();
+  const personal = mode === "personal";
 
   const { data: vendor } = await supabase.from("vendors").select("*").eq("id", id).eq("event_id", event.id).maybeSingle();
   if (!vendor) notFound();
@@ -202,7 +203,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
 
           {/* Tickets */}
           <section className="card p-5">
-            <h2 className="h-display text-xl">Tickets for this vendor</h2>
+            <h2 className="h-display text-xl">{personal ? "To-dos for this vendor" : "Tickets for this vendor"}</h2>
             <ul className="mt-3 space-y-1">
               {(tasks ?? []).map((t) => {
                 const done = t.status === "done";
@@ -222,7 +223,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                       </button>
                     </form>
                     <Link href={`/tickets/${t.id}`} className={`min-w-0 flex-1 truncate text-sm hover:text-accent ${done ? "text-muted line-through" : ""}`}>
-                      <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>
+                      {!personal && <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>}
                       {t.title}
                       {t.due_date && !done && (
                         <span className={`ml-2 text-xs ${t.due_date < today ? "text-amber" : "text-muted"}`}>
@@ -230,7 +231,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                         </span>
                       )}
                     </Link>
-                    <Avatar id={person?.id ?? null} name={person?.name ?? null} size="sm" />
+                    {!personal && <Avatar id={person?.id ?? null} name={person?.name ?? null} size="sm" />}
                   </li>
                 );
               })}
@@ -239,6 +240,12 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
               <input type="hidden" name="vendor_id" value={id} />
               <input type="hidden" name="event_id" value={event.id} />
               <input name="title" required placeholder="Ask about candles on every table" className="input" />
+              {personal ? (
+                <div className="flex justify-end">
+                  <input type="hidden" name="assignee_id" value="me" />
+                  <SubmitButton className="btn-ghost" pendingText="…">Add</SubmitButton>
+                </div>
+              ) : (
               <div className="flex gap-2">
                 <select name="assignee_id" defaultValue="" className="input" aria-label="Assign to">
                   <option value="">Unassigned</option>
@@ -248,6 +255,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                 </select>
                 <SubmitButton className="btn-ghost" pendingText="…">Add</SubmitButton>
               </div>
+              )}
             </form>
           </section>
         </div>

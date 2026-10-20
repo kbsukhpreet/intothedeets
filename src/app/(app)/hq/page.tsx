@@ -40,7 +40,8 @@ type Note = {
 };
 
 export default async function HQPage() {
-  const { supabase, event, user } = await requireEvent();
+  const { supabase, event, user, mode } = await requireEvent();
+  const personal = mode === "personal";
   const today = todayISO();
   const in90 = addDaysISO(90);
 
@@ -88,7 +89,7 @@ export default async function HQPage() {
 
   // Tasks
   const overdueTasks = tasks.filter((t) => t.due_date && t.due_date < today);
-  const mine = tasks.filter((t) => t.assignee_id === user.id);
+  const mine = personal ? tasks : tasks.filter((t) => t.assignee_id === user.id);
   const topTasks = mine.slice(0, 6);
 
   // Follow-ups: vendors "in talks" with no conversation in the last 7 days
@@ -143,9 +144,9 @@ export default async function HQPage() {
           href="/budget"
         />
         <Stat
-          label="Open tickets"
+          label={personal ? "Open tasks" : "Open tickets"}
           value={String(tasks.length)}
-          sub={overdueTasks.length ? `${overdueTasks.length} overdue` : `${mine.length} assigned to you`}
+          sub={overdueTasks.length ? `${overdueTasks.length} overdue` : personal ? "None overdue" : `${mine.length} assigned to you`}
           tone={overdueTasks.length ? "warn" : undefined}
           href="/tickets"
         />
@@ -170,7 +171,11 @@ export default async function HQPage() {
           <ol className="mt-4 space-y-3 text-sm">
             <Step done={vendors.length > 0} href="/vendors" text="Add the vendors you've booked or are talking to" />
             <Step done={payments.length > 0} href="/vendors" text="Add their payment schedules so we can track what's due" />
-            <Step done={memberCount > 1} href="/team" text="Invite your team, then assign them tickets" />
+            {personal ? (
+              <Step done={tasks.length > 0} href="/tickets" text="Add your first few tasks" />
+            ) : (
+              <Step done={memberCount > 1} href="/team" text="Invite your team, then assign them tickets" />
+            )}
           </ol>
         </section>
       )}
@@ -206,9 +211,13 @@ export default async function HQPage() {
         </Panel>
 
         {/* Tasks */}
-        <Panel title="Your tickets" href="/tickets?who=me">
+        <Panel title={personal ? "Your tasks" : "Your tickets"} href={personal ? "/tickets" : "/tickets?who=me"}>
           {topTasks.length === 0 ? (
-            <Empty>Nothing assigned to you for this event. See the whole team on the Tickets page.</Empty>
+            <Empty>
+              {personal
+                ? "Nothing on your list. Add tasks from the Tasks page."
+                : "Nothing assigned to you for this event. See the whole team on the Tickets page."}
+            </Empty>
           ) : (
             <ul className="divide-y divide-line">
               {topTasks.map((t) => (
@@ -223,7 +232,7 @@ export default async function HQPage() {
                   </form>
                   <div className="min-w-0 flex-1">
                     <Link href={`/tickets/${t.id}`} className="block truncate hover:text-accent">
-                      <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>
+                      {!personal && <span className="mr-1.5 text-xs tabular-nums text-muted">#{t.number}</span>}
                       {t.title}
                     </Link>
                     {(t.due_date || t.vendor_id || t.status !== "todo") && (
