@@ -6,11 +6,26 @@ import { SITE_URL } from "@/lib/env";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-fraunces" });
 
+const TITLE = "Into the Deets — dream it. plan it. deet-ail it.";
+const DESCRIPTION =
+  "Vendors, conversations, payments, tasks and every little detail of your event, organized in one place.";
+
 export const metadata: Metadata = {
-  title: "Into the Deets — every detail of your event, in one place",
-  description:
-    "Vendors, conversations, payments, tasks and every little detail of your event, organized in one place.",
+  title: TITLE,
+  description: DESCRIPTION,
   metadataBase: new URL(SITE_URL || "https://intothedeets.com"),
+  // What shows up when a link is pasted into texts, iMessage, WhatsApp, Slack, etc.
+  openGraph: {
+    title: TITLE,
+    description: DESCRIPTION,
+    siteName: "Into the Deets",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: TITLE,
+    description: DESCRIPTION,
+  },
 };
 
 export const viewport: Viewport = {
