@@ -260,13 +260,12 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
       {shown.length === 0 ? (
         <Empty>{all.length ? `No tickets for ${whoLabel.toLowerCase()} here.` : "Nothing here yet."}</Empty>
       ) : view === "board" ? (
-        <div className="-mx-5 overflow-x-auto px-5 pb-2 md:mx-0 md:px-0">
-          <div className="grid min-w-[880px] grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
             {TICKET_STATUSES.map((col) => {
               const items = shown.filter((t) => t.status === col.value);
               return (
-                <div key={col.value} className="rounded-2xl bg-[#f3eee6] p-3">
-                  <div className="mb-3 flex items-center justify-between px-1">
+                <div key={col.value} className="min-w-0 rounded-2xl bg-[#f3eee6] p-2.5">
+                  <div className="mb-2.5 flex items-center justify-between px-1.5 pt-0.5">
                     <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-muted">
                       <i className={`h-2 w-2 rounded-full ${STATUS_STYLES[col.value].dot}`} />
                       {col.label}
@@ -274,38 +273,54 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                     <span className="text-xs tabular-nums text-muted">{items.length}</span>
                   </div>
                   <ul className="space-y-2">
+                    {items.length === 0 && (
+                      <li className="rounded-xl border border-dashed border-[#e2d9cc] px-3 py-4 text-center text-xs text-muted/80">
+                        Nothing here
+                      </li>
+                    )}
                     {items.map((t) => {
                       const person = t.assignee_id ? personById.get(t.assignee_id) : null;
                       const late = t.status !== "done" && t.due_date && t.due_date < today;
                       return (
-                        <li key={t.id} className="card p-3 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
+                        <li key={t.id} className="card min-w-0 p-3 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                           <Link href={`/tickets/${t.id}`} className="block">
-                            <p className="text-[11px] font-medium tabular-nums text-muted">
+                            <p className="truncate text-[11px] font-medium tabular-nums text-muted">
                               #{t.number}
                               {eventFilter === "all" && teamEvents.length > 1 ? ` · ${eventName.get(t.event_id)}` : ""}
                             </p>
-                            <p className={`mt-0.5 text-sm font-medium leading-snug ${t.status === "done" ? "text-muted line-through" : ""}`}>
+                            <p className={`mt-0.5 break-words text-sm font-medium leading-snug ${t.status === "done" ? "text-muted line-through" : "hover:text-accent"}`}>
                               {t.title}
                             </p>
                           </Link>
-                          <div className="mt-2.5 flex items-center gap-2">
-                            <Avatar id={person?.id ?? null} name={person?.name ?? null} size="sm" />
+
+                          {/* Who, priority, when */}
+                          <div className="mt-2 flex flex-wrap items-center gap-x-2.5 gap-y-1">
+                            <span className="flex min-w-0 items-center gap-1.5">
+                              <Avatar id={person?.id ?? null} name={person?.name ?? null} size="sm" />
+                              <span className="truncate text-xs text-muted">
+                                {person ? person.name.split(" ")[0] : "Unassigned"}
+                              </span>
+                            </span>
                             <PriorityTag priority={t.priority} quiet />
                             {t.due_date && t.status !== "done" && (
-                              <span className={`text-xs ${late ? "text-amber" : "text-muted"}`}>{relativeDue(t.due_date)}</span>
+                              <span className={`whitespace-nowrap text-xs ${late ? "text-amber" : "text-muted"}`}>
+                                {relativeDue(t.due_date)}
+                              </span>
                             )}
+                          </div>
+
+                          {/* Comments and quick move */}
+                          <div className="mt-2.5 flex items-center justify-between gap-2 border-t border-line pt-2">
                             <CommentCount n={commentCount.get(t.id) ?? 0} href={`/tickets/${t.id}#comments`} />
-                            <div className="ml-auto">
-                              <AutoSubmitSelect
-                                action={setTicketStatus}
-                                name="status"
-                                value={t.status}
-                                hidden={{ id: t.id }}
-                                options={statusOptions}
-                                ariaLabel="Move ticket"
-                                className="cursor-pointer rounded-md border border-line bg-white px-1.5 py-0.5 text-[11px] text-muted"
-                              />
-                            </div>
+                            <AutoSubmitSelect
+                              action={setTicketStatus}
+                              name="status"
+                              value={t.status}
+                              hidden={{ id: t.id }}
+                              options={statusOptions}
+                              ariaLabel="Move ticket"
+                              className="ml-auto max-w-full cursor-pointer rounded-md border border-line bg-white px-1.5 py-0.5 text-[11px] text-muted hover:border-accent/50"
+                            />
                           </div>
                         </li>
                       );
@@ -314,7 +329,6 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                 </div>
               );
             })}
-          </div>
         </div>
       ) : (
         <div className="card overflow-x-auto">

@@ -44,7 +44,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
   return (
     <div className="space-y-6">
       <Link href="/tickets" className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink shadow-[0_1px_0_rgba(0,0,0,0.03)] transition hover:border-accent/50 hover:text-accent">
-        <span aria-hidden className="text-base leading-none">←</span> Back to all {noun}s
+        <span aria-hidden className="text-base leading-none">←</span> {personal ? "All Tasks" : "All Tickets"}
       </Link>
 
       <div>
