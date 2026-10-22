@@ -17,6 +17,7 @@ drop function if exists public.ticket_before_write() cascade;
 drop function if exists public.shares_team_with(uuid) cascade;
 drop function if exists public.is_team_owner(uuid) cascade;
 drop function if exists public.is_team_member(uuid) cascade;
+drop function if exists public.can_see_task(uuid) cascade;
 
 -- ─────────────────────────────────────────────────────────────
 -- Clean up version 1
@@ -737,5 +738,68 @@ create policy "authors edit comments" on public.ticket_comments
   for update using (author_id = auth.uid()) with check (author_id = auth.uid());
 create policy "authors delete comments" on public.ticket_comments
   for delete using (author_id = auth.uid());
+
+notify pgrst, 'reload schema';
+
+
+-- ═════════════════════════════════════════════════════════════
+-- Version 6: private tickets
+-- ═════════════════════════════════════════════════════════════
+
+alter table public.tasks
+  add column if not exists is_private boolean not null default false;
+
+-- Can the logged-in person see this ticket?
+create or replace function public.can_see_task(tid uuid)
+returns boolean
+language sql
+security definer
+stable
+set search_path = public
+as $$
+  select exists (
+    select 1 from public.tasks t
+    where t.id = tid
+      and public.is_event_member(t.event_id)
+      and (not t.is_private or t.created_by = auth.uid() or t.assignee_id = auth.uid())
+  );
+$$;
+
+-- Tickets
+drop policy if exists "members manage tasks" on public.tasks;
+drop policy if exists "members see tasks" on public.tasks;
+drop policy if exists "members add tasks" on public.tasks;
+drop policy if exists "members change tasks" on public.tasks;
+drop policy if exists "members delete tasks" on public.tasks;
+
+create policy "members see tasks" on public.tasks
+  for select using (
+    public.is_event_member(event_id)
+    and (not is_private or created_by = auth.uid() or assignee_id = auth.uid())
+  );
+create policy "members add tasks" on public.tasks
+  for insert with check (public.is_event_member(event_id));
+create policy "members change tasks" on public.tasks
+  for update using (
+    public.is_event_member(event_id)
+    and (not is_private or created_by = auth.uid() or assignee_id = auth.uid())
+  ) with check (public.is_event_member(event_id));
+create policy "members delete tasks" on public.tasks
+  for delete using (
+    public.is_event_member(event_id)
+    and (not is_private or created_by = auth.uid() or assignee_id = auth.uid())
+  );
+
+-- Comments follow their ticket's privacy.
+drop policy if exists "members read comments" on public.ticket_comments;
+drop policy if exists "members add comments" on public.ticket_comments;
+
+create policy "members read comments" on public.ticket_comments
+  for select using (public.can_see_task(task_id));
+create policy "members add comments" on public.ticket_comments
+  for insert with check (public.can_see_task(task_id) and author_id = auth.uid());
+
+revoke all on function public.can_see_task(uuid) from public, anon;
+grant execute on function public.can_see_task(uuid) to authenticated;
 
 notify pgrst, 'reload schema';

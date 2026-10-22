@@ -8,6 +8,7 @@ import { AutoSubmitSelect, FilterSelect } from "@/components/auto-submit-select"
 import { PriorityTag, ProgressBar, STATUS_STYLES, StatusPill } from "@/components/ticket-bits";
 import { addTask, setTicketAssignee, setTicketStatus } from "../actions";
 import { PersonalTasks } from "./personal-tasks";
+import { Lock } from "@/components/lock";
 
 type Ticket = {
   id: string;
@@ -20,6 +21,7 @@ type Ticket = {
   event_id: string;
   done_at: string | null;
   updated_at: string;
+  is_private: boolean;
 };
 
 type Search = Promise<{ view?: string; who?: string; event?: string; show?: string }>;
@@ -44,7 +46,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
   const [{ data }, { data: commentRows }] = await Promise.all([
     supabase
       .from("tasks")
-      .select("id, number, title, status, priority, due_date, assignee_id, event_id, done_at, updated_at")
+      .select("id, number, title, status, priority, due_date, assignee_id, event_id, done_at, updated_at, is_private")
       .in("event_id", eventIds),
     supabase.from("ticket_comments").select("task_id").in("event_id", eventIds),
   ]);
@@ -152,6 +154,14 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
           ))}
         </select>
         <input name="due_date" type="date" className="input w-auto" aria-label="Due date" />
+        <label
+          className="flex cursor-pointer select-none items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm text-muted transition hover:bg-paper has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent-dark"
+          title="Only you and the person you assign can see a private ticket"
+        >
+          <input type="checkbox" name="is_private" className="sr-only" />
+          <Lock />
+          Private
+        </label>
         <SubmitButton pendingText="Adding…">Add</SubmitButton>
       </form>
 
@@ -284,7 +294,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                       return (
                         <li key={t.id} className="card min-w-0 p-3 shadow-[0_1px_0_rgba(0,0,0,0.03)]">
                           <Link href={`/tickets/${t.id}`} className="block">
-                            <p className="truncate text-[11px] font-medium tabular-nums text-muted">
+                            <p className="flex items-center gap-1 truncate text-[11px] font-medium tabular-nums text-muted">
+                              {t.is_private && <span className="text-accent"><Lock className="h-3 w-3" /></span>}
                               #{t.number}
                               {eventFilter === "all" && teamEvents.length > 1 ? ` · ${eventName.get(t.event_id)}` : ""}
                             </p>
@@ -350,7 +361,9 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                   <tr key={t.id} className="hover:bg-paper/60">
                     <td className="px-4 py-2.5">
                       <Link href={`/tickets/${t.id}`} className="mr-2 inline-flex items-baseline gap-2 hover:text-accent">
-                        <span className="text-xs tabular-nums text-muted">#{t.number}</span>
+                        <span className="flex items-center gap-1 text-xs tabular-nums text-muted">
+                          {t.is_private && <span className="text-accent"><Lock className="h-3 w-3" /></span>}#{t.number}
+                        </span>
                         <span className={`font-medium ${t.status === "done" ? "text-muted line-through" : ""}`}>{t.title}</span>
                       </Link>
                       <CommentCount n={commentCount.get(t.id) ?? 0} href={`/tickets/${t.id}#comments`} />

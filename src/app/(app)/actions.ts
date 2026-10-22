@@ -162,6 +162,7 @@ export async function addTask(form: FormData) {
       priority: pick(text(form, "priority"), PRIORITIES, "medium"),
       status: pick(text(form, "status"), STATUSES, "todo"),
       assignee_id: assignee === "me" ? user.id : assignee,
+      is_private: form.get("is_private") === "on",
       created_by: user.id,
     })
     .select("id, assignee_id")
@@ -221,6 +222,8 @@ export async function updateTicket(form: FormData) {
       assignee_id: assignee,
       due_date: text(form, "due_date"),
       vendor_id: text(form, "vendor_id"),
+      // Only change privacy when the form actually shows the Private switch.
+      ...(form.get("has_private") === "1" ? { is_private: form.get("is_private") === "on" } : {}),
     })
     .eq("id", id);
   if (error) fail(error.message);

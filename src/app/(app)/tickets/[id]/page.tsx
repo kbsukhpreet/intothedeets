@@ -6,6 +6,7 @@ import { Avatar } from "@/components/avatar";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmButton } from "@/components/confirm-button";
 import { PriorityTag, StatusPill } from "@/components/ticket-bits";
+import { Lock } from "@/components/lock";
 import { addComment, deleteComment, deleteTask, editComment, updateTicket } from "../../actions";
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
@@ -16,7 +17,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
   const { data: t } = await supabase
     .from("tasks")
-    .select("id, number, title, notes, status, priority, due_date, assignee_id, event_id, vendor_id, created_by, created_at, updated_at, done_at")
+    .select("id, number, title, notes, status, priority, due_date, assignee_id, event_id, vendor_id, created_by, created_at, updated_at, done_at, is_private")
     .eq("id", id)
     .maybeSingle();
   if (!t) notFound();
@@ -53,6 +54,14 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
           {team && !personal ? ` · ${team.name}` : ""}
         </p>
         <h1 className="h-display mt-1 text-3xl sm:text-4xl">{t.title}</h1>
+        {t.is_private && !personal && (
+          <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-accent-dark">
+            <Lock className="h-3.5 w-3.5" />
+            Private: only {creator?.id === user.id ? "you" : creator?.name.split(" ")[0] ?? "the creator"}
+            {" and "}
+            {assignee ? (assignee.id === user.id ? "you" : assignee.name.split(" ")[0]) : "the assignee"} can see this
+          </p>
+        )}
         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
           <StatusPill status={t.status} />
           <PriorityTag priority={t.priority} />
@@ -226,6 +235,21 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                 className="input resize-y"
               />
             </div>
+            {!personal && (
+              <>
+                <input type="hidden" name="has_private" value="1" />
+                <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3 hover:bg-paper">
+                  <input type="checkbox" name="is_private" defaultChecked={t.is_private} className="peer sr-only" />
+                  <span className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-line transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4" />
+                  <span>
+                    <span className="flex items-center gap-1.5 text-sm font-medium"><Lock /> Private</span>
+                    <span className="block text-xs text-muted">
+                      Only {creator && creator.id !== user.id ? creator.name.split(" ")[0] : "you"} and the person assigned can see this ticket and its comments.
+                    </span>
+                  </span>
+                </label>
+              </>
+            )}
             <SubmitButton className="btn-primary w-full">Save changes</SubmitButton>
           </form>
 
