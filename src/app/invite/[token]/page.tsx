@@ -74,7 +74,7 @@ export default async function InvitePage({
         ) : (
           <>
             <p className="text-sm uppercase tracking-[0.2em] text-accent">You&apos;re invited</p>
-            <h1 className="h-display mt-3 text-3xl">Join {invite.team_name}</h1>
+            <h1 className="h-display mt-3 text-3xl">Join the team for {invite.team_name}</h1>
             <p className="mt-2 text-sm text-muted">
               {invite.inviter_name ? `${invite.inviter_name} invited you` : "You've been invited"} to plan
               together on Into the Deets. {Number(invite.member_count)}{" "}

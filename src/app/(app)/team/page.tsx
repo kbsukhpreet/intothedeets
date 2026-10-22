@@ -3,13 +3,13 @@ import { requireEvent, teamPeople } from "@/lib/event";
 import { SITE_URL } from "@/lib/env";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
-import { CopyButton } from "@/components/copy-button";
+import { ShareInvite } from "@/components/share-invite";
 import { ConfirmButton } from "@/components/confirm-button";
 import { Avatar } from "@/components/avatar";
 import { removeMember, renameTeam, resetInviteLink } from "../actions";
 
 export default async function TeamPage() {
-  const { supabase, user, team, teams, events, mode } = await requireEvent();
+  const { supabase, user, team, teams, events, mode, fullName } = await requireEvent();
   const people = await teamPeople(supabase, team.id, user.id);
   const teamEventIds = events.filter((e) => e.team_id === team.id).map((e) => e.id);
 
@@ -24,6 +24,8 @@ export default async function TeamPage() {
   const me = people.find((p) => p.id === user.id);
   const isOwner = me?.role === "owner";
   const link = `${SITE_URL || "https://intothedeets.com"}/invite/${team.invite_token}`;
+  const sharer = fullName.trim().split(" ")[0] || me?.name.split(" ")[0] || "Your teammate";
+  const inviteMessage = `${sharer} is requesting you to join the team for ${team.name}!`;
 
   return (
     <div className="space-y-8">
@@ -46,9 +48,8 @@ export default async function TeamPage() {
           Share this link with family, friends or co-planners, for example in your group chat.
           Each person creates their own account and joins {team.name} automatically.
         </p>
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <input readOnly value={link} className="input min-w-0 flex-1 font-mono text-xs" />
-          <CopyButton value={link} />
+        <div className="mt-4">
+          <ShareInvite message={inviteMessage} link={link} />
         </div>
         {isOwner && (
           <form action={resetInviteLink} className="mt-3">
