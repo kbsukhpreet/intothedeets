@@ -91,13 +91,14 @@ export async function PersonalTasks({
             className="input min-w-[200px] flex-1 border-0 focus:ring-0"
           />
           <DatePicker name="due_date" placeholder="Due date" prefix="Due " short className="w-auto min-w-[9.5rem]" ariaLabel="Due date" />
-          <select name="priority" defaultValue="medium" className="input w-auto" aria-label="Priority">
+          <select name="priority" defaultValue="" className="input select-placeholder w-auto" aria-label="Priority level">
+            <option value="">Priority level</option>
             {TICKET_PRIORITIES.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>
             ))}
           </select>
           {vendors.length > 0 && (
-            <select name="vendor_id" defaultValue="" className="input w-auto" aria-label="Vendor">
+            <select name="vendor_id" defaultValue="" className="input select-placeholder w-auto" aria-label="Vendor">
               <option value="">No vendor</option>
               {vendors.map((v) => (
                 <option key={v.id} value={v.id}>{v.name}</option>

@@ -66,3 +66,11 @@ body {
     filter: none;
   }
 }
+
+/* Dropdowns show their "nothing picked yet" choice in the same light gray as text-box placeholders. */
+.select-placeholder:has(option[value=""]:checked) {
+  color: color-mix(in srgb, var(--color-muted) 60%, transparent);
+}
+.select-placeholder option {
+  color: var(--color-ink);
+}

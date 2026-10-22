@@ -248,7 +248,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                 </div>
               ) : (
               <div className="flex gap-2">
-                <select name="assignee_id" defaultValue="" className="input" aria-label="Assign to">
+                <select name="assignee_id" defaultValue="" className="input select-placeholder" aria-label="Assign to">
                   <option value="">Unassigned</option>
                   {people.map((p) => (
                     <option key={p.id} value={p.id}>{p.id === user.id ? `${p.name} (me)` : p.name}</option>

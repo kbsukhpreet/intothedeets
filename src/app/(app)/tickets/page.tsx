@@ -136,7 +136,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
           placeholder="New ticket… e.g. Get quotes from 3 caterers"
           className="input min-w-[220px] flex-[2] border-0 focus:ring-0"
         />
-        <select name="assignee_id" defaultValue={whoKey === "me" ? user.id : personById.has(whoKey) ? whoKey : ""} className="input w-auto" aria-label="Assign to">
+        <select name="assignee_id" defaultValue={whoKey === "me" ? user.id : personById.has(whoKey) ? whoKey : ""} className="input select-placeholder w-auto" aria-label="Assign to">
           {assigneeOptions.map((o) => (
             <option key={o.value} value={o.value}>{o.value ? `→ ${o.label}` : "Unassigned"}</option>
           ))}
@@ -149,7 +149,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
           </select>
         )}
         {teamEvents.length === 1 && <input type="hidden" name="event_id" value={teamEvents[0].id} />}
-        <select name="priority" defaultValue="medium" className="input w-auto" aria-label="Priority">
+        <select name="priority" defaultValue="" className="input select-placeholder w-auto" aria-label="Priority level">
+          <option value="">Priority level</option>
           {TICKET_PRIORITIES.map((p) => (
             <option key={p.value} value={p.value}>{p.label}</option>
           ))}
