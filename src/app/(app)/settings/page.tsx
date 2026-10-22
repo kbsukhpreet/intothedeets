@@ -4,15 +4,20 @@ import { EVENT_TYPES } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { VIEW_MODES, ModeIcon } from "@/components/view-mode-choice";
-import { deleteEvent, setViewMode, updateEvent } from "../actions";
+import { deleteEvent, setNotifications, setViewMode, updateEvent } from "../actions";
 
 export default async function SettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ switched?: string; error?: string }>;
+  searchParams: Promise<{ switched?: string; error?: string; saved?: string }>;
 }) {
-  const { switched, error } = await searchParams;
-  const { event, user, team, mode } = await requireEvent();
+  const { switched, error, saved } = await searchParams;
+  const { supabase, event, user, team, mode } = await requireEvent();
+  const { data: prefs } = await supabase
+    .from("profiles")
+    .select("email, notify_assigned, notify_comments")
+    .eq("id", user.id)
+    .maybeSingle();
 
   const isCreator = event.created_by === user.id;
 
@@ -117,6 +122,33 @@ export default async function SettingsPage({
       </section>
 
       {mode === "team" && (
+        <section className="card p-6">
+          <h2 className="h-display text-2xl">Email notifications</h2>
+          <p className="mt-1 text-sm text-muted">
+            Sent to {prefs?.email ?? user.email}. You never get emails about things you did yourself.
+          </p>
+          {saved === "notifications" && (
+            <p className="mt-3 rounded-lg bg-sage-soft px-3 py-2 text-sm text-sage">Saved.</p>
+          )}
+          <form action={setNotifications} className="mt-4 space-y-3">
+            <Toggle
+              name="notify_assigned"
+              defaultChecked={prefs?.notify_assigned ?? true}
+              title="When I'm assigned a ticket"
+              body="Get an email with the ticket and a link to open it."
+            />
+            <Toggle
+              name="notify_comments"
+              defaultChecked={prefs?.notify_comments ?? true}
+              title="When someone comments on my tickets"
+              body="Get the comment by email so you can reply quickly."
+            />
+            <SubmitButton className="btn-ghost">Save notification settings</SubmitButton>
+          </form>
+        </section>
+      )}
+
+      {mode === "team" && (
       <section className="card flex flex-wrap items-center justify-between gap-3 p-6">
         <div>
           <h2 className="h-display text-2xl">Who&apos;s planning</h2>
@@ -146,5 +178,28 @@ export default async function SettingsPage({
         </details>
       )}
     </div>
+  );
+}
+
+function Toggle({
+  name,
+  defaultChecked,
+  title,
+  body,
+}: {
+  name: string;
+  defaultChecked: boolean;
+  title: string;
+  body: string;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-line p-3 hover:bg-paper">
+      <input type="checkbox" name={name} defaultChecked={defaultChecked} className="peer sr-only" />
+      <span className="relative mt-0.5 h-5 w-9 shrink-0 rounded-full bg-line transition peer-checked:bg-accent after:absolute after:left-0.5 after:top-0.5 after:h-4 after:w-4 after:rounded-full after:bg-white after:transition peer-checked:after:translate-x-4" />
+      <span>
+        <span className="block text-sm font-medium">{title}</span>
+        <span className="block text-xs text-muted">{body}</span>
+      </span>
+    </label>
   );
 }

@@ -1,6 +1,8 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { notifyAssigned, notifyComment } from "@/lib/email";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { CURRENT_EVENT_COOKIE, num, requireEvent, text } from "@/lib/event";
@@ -162,11 +164,13 @@ export async function addTask(form: FormData) {
       assignee_id: assignee === "me" ? user.id : assignee,
       created_by: user.id,
     })
-    .select("id")
+    .select("id, assignee_id")
     .single();
   if (error) fail(error.message);
+  const created = data!;
+  after(() => notifyAssigned(created.id, created.assignee_id, user.id));
   refresh();
-  if (text(form, "open_after") === "1") redirect(`/tickets/${data!.id}`);
+  if (text(form, "open_after") === "1") redirect(`/tickets/${created.id}`);
 }
 
 export async function toggleTask(form: FormData) {
@@ -192,17 +196,21 @@ export async function setTicketStatus(form: FormData) {
 }
 
 export async function setTicketAssignee(form: FormData) {
-  const { supabase } = await requireEvent();
-  const { error } = await supabase
-    .from("tasks")
-    .update({ assignee_id: text(form, "assignee_id") })
-    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+  const { supabase, user } = await requireEvent();
+  const id = text(form, "id") ?? fail("Missing ticket");
+  const assignee = text(form, "assignee_id");
+  const { data: before } = await supabase.from("tasks").select("assignee_id").eq("id", id).maybeSingle();
+  const { error } = await supabase.from("tasks").update({ assignee_id: assignee }).eq("id", id);
   if (error) fail(error.message);
+  if (assignee && assignee !== before?.assignee_id) after(() => notifyAssigned(id, assignee, user.id));
   refresh();
 }
 
 export async function updateTicket(form: FormData) {
-  const { supabase } = await requireEvent();
+  const { supabase, user } = await requireEvent();
+  const id = text(form, "id") ?? fail("Missing ticket");
+  const assignee = text(form, "assignee_id");
+  const { data: before } = await supabase.from("tasks").select("assignee_id").eq("id", id).maybeSingle();
   const { error } = await supabase
     .from("tasks")
     .update({
@@ -210,12 +218,13 @@ export async function updateTicket(form: FormData) {
       notes: text(form, "notes"),
       status: pick(text(form, "status"), STATUSES, "todo"),
       priority: pick(text(form, "priority"), PRIORITIES, "medium"),
-      assignee_id: text(form, "assignee_id"),
+      assignee_id: assignee,
       due_date: text(form, "due_date"),
       vendor_id: text(form, "vendor_id"),
     })
-    .eq("id", text(form, "id") ?? fail("Missing ticket"));
+    .eq("id", id);
   if (error) fail(error.message);
+  if (assignee && assignee !== before?.assignee_id) after(() => notifyAssigned(id, assignee, user.id));
   refresh();
 }
 
@@ -234,15 +243,17 @@ export async function deleteTask(form: FormData) {
 export async function addComment(form: FormData) {
   const { supabase, user } = await requireEvent();
   const taskId = text(form, "task_id") ?? fail("Missing ticket");
-  const { data: task } = await supabase.from("tasks").select("event_id").eq("id", taskId).single();
+  const { data: task } = await supabase.from("tasks").select("event_id, assignee_id").eq("id", taskId).single();
   if (!task) fail("Ticket not found");
+  const body = text(form, "body") ?? fail("Write a comment first");
   const { error } = await supabase.from("ticket_comments").insert({
     task_id: taskId,
     event_id: task.event_id,
     author_id: user.id,
-    body: text(form, "body") ?? fail("Write an update first"),
+    body,
   });
   if (error) fail(error.message);
+  after(() => notifyComment(taskId, task.assignee_id, user.id, body));
 
   // Posting an update can also move the ticket along.
   const status = text(form, "status");
@@ -257,9 +268,41 @@ export async function deleteComment(form: FormData) {
   const { error } = await supabase
     .from("ticket_comments")
     .delete()
-    .eq("id", text(form, "id") ?? fail("Missing update"));
+    .eq("id", text(form, "id") ?? fail("Missing comment"));
   if (error) fail(error.message);
   refresh();
+}
+
+export async function editComment(form: FormData) {
+  const { supabase, user } = await requireEvent();
+  const { error } = await supabase
+    .from("ticket_comments")
+    .update({ body: text(form, "body") ?? fail("A comment can't be empty"), edited_at: new Date().toISOString() })
+    .eq("id", text(form, "id") ?? fail("Missing comment"))
+    .eq("author_id", user.id);
+  if (error) fail(error.message);
+  refresh();
+}
+
+// ── Notification settings ────────────────────────────────────
+
+export async function setNotifications(form: FormData) {
+  const { supabase, user } = await requireEvent();
+  const { error } = await supabase
+    .from("profiles")
+    .update({
+      notify_assigned: form.get("notify_assigned") === "on",
+      notify_comments: form.get("notify_comments") === "on",
+    })
+    .eq("id", user.id);
+  if (error) {
+    const hint = /notify_/.test(error.message)
+      ? "The database is missing upgrade 5 (005_notifications_and_comments.sql). Run it in Supabase, then try again."
+      : error.message;
+    redirect(`/settings?error=${encodeURIComponent(hint)}`);
+  }
+  refresh();
+  redirect("/settings?saved=notifications");
 }
 
 // ── Events ───────────────────────────────────────────────

@@ -41,10 +41,15 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
   const whoKey = params.who === "me" ? "me" : params.who ?? "all";
 
   const eventIds = eventFilter === "all" ? teamEvents.map((e) => e.id) : [eventFilter];
-  const { data } = await supabase
-    .from("tasks")
-    .select("id, number, title, status, priority, due_date, assignee_id, event_id, done_at, updated_at")
-    .in("event_id", eventIds);
+  const [{ data }, { data: commentRows }] = await Promise.all([
+    supabase
+      .from("tasks")
+      .select("id, number, title, status, priority, due_date, assignee_id, event_id, done_at, updated_at")
+      .in("event_id", eventIds),
+    supabase.from("ticket_comments").select("task_id").in("event_id", eventIds),
+  ]);
+  const commentCount = new Map<string, number>();
+  for (const c of commentRows ?? []) commentCount.set(c.task_id, (commentCount.get(c.task_id) ?? 0) + 1);
 
   const today = todayISO();
   const all = ((data ?? []) as Ticket[]).sort(
@@ -289,6 +294,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                             {t.due_date && t.status !== "done" && (
                               <span className={`text-xs ${late ? "text-amber" : "text-muted"}`}>{relativeDue(t.due_date)}</span>
                             )}
+                            <CommentCount n={commentCount.get(t.id) ?? 0} href={`/tickets/${t.id}#comments`} />
                             <div className="ml-auto">
                               <AutoSubmitSelect
                                 action={setTicketStatus}
@@ -329,10 +335,11 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
                 return (
                   <tr key={t.id} className="hover:bg-paper/60">
                     <td className="px-4 py-2.5">
-                      <Link href={`/tickets/${t.id}`} className="flex items-baseline gap-2 hover:text-accent">
+                      <Link href={`/tickets/${t.id}`} className="mr-2 inline-flex items-baseline gap-2 hover:text-accent">
                         <span className="text-xs tabular-nums text-muted">#{t.number}</span>
                         <span className={`font-medium ${t.status === "done" ? "text-muted line-through" : ""}`}>{t.title}</span>
                       </Link>
+                      <CommentCount n={commentCount.get(t.id) ?? 0} href={`/tickets/${t.id}#comments`} />
                     </td>
                     {teamEvents.length > 1 && <td className="px-3 py-2.5 text-muted">{eventName.get(t.event_id)}</td>}
                     <td className="px-3 py-2.5">
@@ -371,9 +378,21 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
 
       <p className="text-xs text-muted">
         Tip: click a person under Team progress to see only their tickets. Open a ticket to add details
-        and post progress updates. <StatusPill status="blocked" /> means someone is waiting on something.
+        and comments. <StatusPill status="blocked" /> means someone is waiting on something.
       </p>
     </div>
+  );
+}
+
+function CommentCount({ n, href }: { n: number; href: string }) {
+  if (!n) return null;
+  return (
+    <Link href={href} title={`${n} comment${n === 1 ? "" : "s"}`} className="inline-flex items-center gap-1 text-xs text-muted hover:text-accent">
+      <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+        <path d="M4 5h16v11H9l-5 4z" strokeLinejoin="round" />
+      </svg>
+      {n}
+    </Link>
   );
 }
 

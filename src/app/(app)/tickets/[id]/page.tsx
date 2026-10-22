@@ -6,7 +6,7 @@ import { Avatar } from "@/components/avatar";
 import { SubmitButton } from "@/components/submit-button";
 import { ConfirmButton } from "@/components/confirm-button";
 import { PriorityTag, StatusPill } from "@/components/ticket-bits";
-import { addComment, deleteComment, deleteTask, updateTicket } from "../../actions";
+import { addComment, deleteComment, deleteTask, editComment, updateTicket } from "../../actions";
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,7 +29,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
     teamPeople(supabase, event.team_id, user.id),
     supabase
       .from("ticket_comments")
-      .select("id, body, author_id, created_at")
+      .select("id, body, author_id, created_at, edited_at")
       .eq("task_id", id)
       .order("created_at", { ascending: true }),
     supabase.from("vendors").select("id, name").eq("event_id", event.id).order("name"),
@@ -77,60 +77,90 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
         {/* Updates */}
-        <section className="card p-5">
-          <h2 className="h-display text-2xl">{personal ? "Notes & updates" : "Progress updates"}</h2>
+        <section id="comments" className="card scroll-mt-6 p-5">
+          <h2 className="h-display text-2xl">
+            {personal ? "Notes" : "Comments"}
+            {(comments ?? []).length > 0 && (
+              <span className="ml-2 align-middle text-sm font-normal text-muted">{(comments ?? []).length}</span>
+            )}
+          </h2>
           <p className="mt-1 text-sm text-muted">
             {personal
               ? "Keep a running log: who you called, what they said, what's next."
-              : "Post what you've done, what you heard back, or what you're stuck on."}
+              : "Ask questions, share what you heard back, or say what you're stuck on."}
           </p>
 
           <ol className="mt-5 space-y-5">
             {(comments ?? []).length === 0 && (
-              <li className="text-sm text-muted">No updates yet.</li>
+              <li className="text-sm text-muted">{personal ? "No notes yet." : "No comments yet. Start the conversation below."}</li>
             )}
             {(comments ?? []).map((c) => {
               const author = c.author_id ? personById.get(c.author_id) : null;
+              const mine = c.author_id === user.id;
               return (
-                <li key={c.id} className="group flex gap-3">
+                <li key={c.id} className="flex gap-3">
                   <Avatar id={author?.id ?? c.author_id} name={author?.name ?? "Former member"} />
                   <div className="min-w-0 flex-1">
                     <p className="text-sm">
-                      <span className="font-medium">{author?.name ?? "Former member"}</span>
-                      <span className="ml-2 text-xs text-muted">{timeAgo(c.created_at)}</span>
+                      <span className="font-medium">{mine ? "You" : author?.name ?? "Former member"}</span>
+                      <span className="ml-2 text-xs text-muted">
+                        {timeAgo(c.created_at)}
+                        {c.edited_at ? " · edited" : ""}
+                      </span>
                     </p>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm leading-relaxed">{c.body}</p>
+                    <div className="mt-1 rounded-xl rounded-tl-sm bg-paper px-3.5 py-2.5">
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed">{c.body}</p>
+                    </div>
+                    {mine && (
+                      <details className="group mt-1">
+                        <summary className="inline-flex cursor-pointer list-none gap-3 text-xs text-muted">
+                          <span className="hover:text-accent">Edit</span>
+                        </summary>
+                        <form action={editComment} className="mt-2 space-y-2">
+                          <input type="hidden" name="id" value={c.id} />
+                          <textarea name="body" required rows={3} defaultValue={c.body} className="input resize-y" />
+                          <div className="flex items-center gap-3">
+                            <SubmitButton className="btn-ghost py-1.5" pendingText="Saving…">Save</SubmitButton>
+                          </div>
+                        </form>
+                        <form action={deleteComment} className="mt-2">
+                          <input type="hidden" name="id" value={c.id} />
+                          <ConfirmButton message="Delete this comment?" className="text-xs text-muted hover:text-accent">
+                            Delete comment
+                          </ConfirmButton>
+                        </form>
+                      </details>
+                    )}
                   </div>
-                  {c.author_id === user.id && (
-                    <form action={deleteComment} className="opacity-0 transition group-hover:opacity-100">
-                      <input type="hidden" name="id" value={c.id} />
-                      <button className="text-xs text-muted hover:text-accent">Delete</button>
-                    </form>
-                  )}
                 </li>
               );
             })}
           </ol>
 
-          <form action={addComment} className="mt-6 space-y-2 rounded-xl bg-paper p-4">
+          <form action={addComment} className="mt-6 space-y-2 rounded-xl border border-line p-3">
             <input type="hidden" name="task_id" value={t.id} />
             <textarea
               name="body"
               required
               rows={3}
-              placeholder="e.g. Called two caterers, waiting on a quote from Spice Route by Friday."
-              className="input resize-y"
+              placeholder={personal ? "Add a note…" : "Write a comment…"}
+              className="input resize-y border-0 px-1 focus:ring-0"
             />
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 border-t border-line pt-2">
               <label className="text-xs text-muted" htmlFor="move">Also move to</label>
-              <select id="move" name="status" defaultValue="" className="input w-auto py-1.5 text-sm">
+              <select id="move" name="status" defaultValue="" className="input w-auto py-1 text-xs">
                 <option value="">(keep {TICKET_STATUSES.find((s) => s.value === t.status)?.label})</option>
                 {TICKET_STATUSES.filter((s) => s.value !== t.status).map((s) => (
                   <option key={s.value} value={s.value}>{s.label}</option>
                 ))}
               </select>
-              <SubmitButton className="btn-primary ml-auto" pendingText="Posting…">Post update</SubmitButton>
+              <SubmitButton className="btn-primary ml-auto py-1.5" pendingText="Posting…">
+                {personal ? "Add note" : "Comment"}
+              </SubmitButton>
             </div>
+            {!personal && assignee && assignee.id !== user.id && (
+              <p className="px-1 text-xs text-muted">{assignee.name} will get an email about your comment.</p>
+            )}
           </form>
         </section>
 
@@ -172,6 +202,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                   <option key={p.id} value={p.id}>{p.id === user.id ? `${p.name} (me)` : p.name}</option>
                 ))}
               </select>
+              <p className="mt-1 text-xs text-muted">The person you assign gets an email.</p>
             </div>
             )}
             <div>
