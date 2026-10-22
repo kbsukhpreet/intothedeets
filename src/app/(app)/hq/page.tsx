@@ -40,7 +40,7 @@ type Note = {
 };
 
 export default async function EventDashboardPage() {
-  const { supabase, event, user, mode } = await requireEvent();
+  const { supabase, event, user, mode, team } = await requireEvent();
   const personal = mode === "personal";
   const today = todayISO();
   const in90 = addDaysISO(90);
@@ -100,7 +100,8 @@ export default async function EventDashboardPage() {
     .filter((v) => v.status === "contacted")
     .filter((v) => !lastContact.has(v.id) || lastContact.get(v.id)! < weekAgo);
 
-  const greetingName = (profileRes.data?.full_name ?? "").split(" ")[0] || "back";
+  const firstName = (profileRes.data?.full_name ?? "").trim().split(" ")[0];
+  const greetingName = firstName || "back";
   const isNew = vendors.length === 0;
 
   return (
@@ -110,9 +111,14 @@ export default async function EventDashboardPage() {
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <div className="absolute -right-24 top-6 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <p className="h-display relative max-w-[85%] text-2xl leading-snug sm:text-3xl">
-          {personal ? `Welcome ${greetingName}!` : `Welcome ${greetingName} to ${event.name}!`}
+          {personal ? `Welcome ${greetingName}!` : `Welcome ${greetingName} to ${team.name}!`}
         </p>
-        <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-white/70">{event.event_type}</p>
+        {!firstName && (
+          <Link href="/settings#profile" className="relative mt-1 inline-block text-sm text-white/80 underline underline-offset-2 hover:text-white">
+            Add your name so we can greet you properly
+          </Link>
+        )}
+        <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-white/70">{event.name !== event.event_type ? `${event.name} · ${event.event_type}` : event.event_type}</p>
         {days !== null ? (
           <>
             <p className="h-display mt-1 text-6xl sm:text-7xl">

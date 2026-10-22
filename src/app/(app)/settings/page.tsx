@@ -5,7 +5,7 @@ import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
 import { DatePicker } from "@/components/date-picker";
 import { VIEW_MODES, ModeIcon } from "@/components/view-mode-choice";
-import { deleteEvent, setNotifications, setViewMode, updateEvent } from "../actions";
+import { deleteEvent, setNotifications, setViewMode, updateEvent, updateProfile } from "../actions";
 
 export default async function SettingsPage({
   searchParams,
@@ -16,7 +16,7 @@ export default async function SettingsPage({
   const { supabase, event, user, team, mode } = await requireEvent();
   const { data: prefs } = await supabase
     .from("profiles")
-    .select("email, notify_assigned, notify_comments")
+    .select("full_name, email, notify_assigned, notify_comments")
     .eq("id", user.id)
     .maybeSingle();
 
@@ -45,6 +45,29 @@ export default async function SettingsPage({
           )}
         </div>
       )}
+
+      <section id="profile" className="card scroll-mt-6 p-6">
+        <h2 className="h-display text-2xl">Your profile</h2>
+        <p className="mt-1 text-sm text-muted">Your name shows on your dashboard, tickets and comments.</p>
+        {saved === "profile" && (
+          <p className="mt-3 rounded-lg bg-sage-soft px-3 py-2 text-sm text-sage">Saved.</p>
+        )}
+        <form action={updateProfile} className="mt-4 flex flex-wrap items-end gap-3">
+          <div className="min-w-[220px] flex-1">
+            <label className="label" htmlFor="full_name">Full name</label>
+            <input
+              id="full_name"
+              name="full_name"
+              required
+              autoComplete="name"
+              defaultValue={prefs?.full_name ?? ""}
+              placeholder="e.g. Sukhpreet Kaur"
+              className="input"
+            />
+          </div>
+          <SubmitButton className="btn-primary">Save name</SubmitButton>
+        </form>
+      </section>
 
       <section className="card p-6">
         <h2 className="h-display text-2xl">How you plan</h2>

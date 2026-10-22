@@ -400,3 +400,15 @@ export async function setViewMode(form: FormData) {
   refresh();
   redirect(`/settings?switched=${mode}`);
 }
+
+// ── Your profile ─────────────────────────────────────────────
+
+export async function updateProfile(form: FormData) {
+  const { supabase, user } = await requireEvent();
+  const fullName = (text(form, "full_name") ?? "").replace(/\s+/g, " ");
+  if (fullName.length < 2) redirect(`/settings?error=${encodeURIComponent("Please enter your full name.")}#profile`);
+  const { error } = await supabase.from("profiles").update({ full_name: fullName }).eq("id", user.id);
+  if (error) redirect(`/settings?error=${encodeURIComponent(error.message)}`);
+  refresh();
+  redirect("/settings?saved=profile#profile");
+}
