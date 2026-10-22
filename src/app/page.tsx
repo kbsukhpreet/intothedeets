@@ -46,7 +46,7 @@ export default async function Home() {
         <h1 className="h-display max-w-3xl text-5xl leading-[1.05] sm:text-7xl">
           Every detail of your event, all in one place.
         </h1>
-        <p className="mt-6 max-w-xl text-lg text-muted">
+        <p className="mt-6 max-w-2xl text-pretty text-lg text-muted">
           Stop digging through texts, emails and spreadsheets. Into the Deets keeps your
           vendors, conversations, payments and to-dos together. Planning with others? Assign
           tickets to your team and track everyone&apos;s progress, so you always know what&apos;s
