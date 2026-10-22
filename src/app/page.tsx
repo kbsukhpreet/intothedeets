@@ -42,15 +42,16 @@ export default async function Home() {
 
       <section className="py-16 sm:py-24">
         <p className="mb-4 text-sm font-medium uppercase tracking-[0.2em] text-accent">
-          Event planning, organized
+          Dream it. Plan it. Deet-ail it.
         </p>
         <h1 className="h-display max-w-3xl text-5xl leading-[1.05] sm:text-7xl">
-          Every detail of your event, in one place.
+          Every detail of your event, all in one place.
         </h1>
         <p className="mt-6 max-w-xl text-lg text-muted">
           Stop digging through texts, emails and spreadsheets. Into the Deets keeps your
-          vendors, conversations, payments and to-dos together, so you always know
-          what&apos;s next.
+          vendors, conversations, payments and to-dos together. Planning with others? Assign
+          tickets to your team and track everyone&apos;s progress, so you always know what&apos;s
+          done and what&apos;s next.
         </p>
         <div className="mt-10 flex flex-wrap gap-3">
           <Link href="/login?mode=signup" className="btn-primary px-6 py-3 text-base">
