@@ -10,7 +10,7 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 - **Personal or team view:** "Just me" shows a simple task/vendor/budget planner; "With a team" shows the Jira-style tickets. One-click switch in Settings; nothing is lost when switching
 - **Teams** (like Jira): create a team, share one invite link, and everyone joins with their own account. A team can run many events; people can be on several teams
 - **Tickets:** numbered (#12), with assignee, status (To do / In progress / Blocked / Done), priority, due date, description, linked vendor, and comments (editable by their author)
-- **Email notifications** (via Resend) when you're assigned a ticket or someone comments on yours; each person can turn them off in Settings
+- **Email notifications** (via Resend) when you're assigned a ticket; each person can turn them off in Settings. Comment notifications are planned for the phone app
 - **Tickets dashboard:** progress for each person, a board and list view, and filters for me / a teammate / unassigned / an event
 - **Event HQ:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
 - **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too

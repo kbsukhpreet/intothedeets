@@ -110,7 +110,10 @@ export async function notifyAssigned(ticketId: string, assigneeId: string | null
   await send(recipient.email!, subject, html, text);
 }
 
-/** Email the ticket's assignee when someone else comments on it. */
+/**
+ * Email the ticket's assignee when someone else comments on it.
+ * Currently not used (paused to save email quota); kept for the phone app.
+ */
 export async function notifyComment(ticketId: string, assigneeId: string | null, actorId: string, comment: string) {
   if (!assigneeId || assigneeId === actorId) return;
   const info = await lookup(ticketId, assigneeId, actorId);

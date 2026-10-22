@@ -158,9 +158,6 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                 {personal ? "Add note" : "Comment"}
               </SubmitButton>
             </div>
-            {!personal && assignee && assignee.id !== user.id && (
-              <p className="px-1 text-xs text-muted">{assignee.name} will get an email about your comment.</p>
-            )}
           </form>
         </section>
 

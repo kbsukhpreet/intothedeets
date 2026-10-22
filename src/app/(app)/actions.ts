@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { after } from "next/server";
-import { notifyAssigned, notifyComment } from "@/lib/email";
+import { notifyAssigned } from "@/lib/email";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { CURRENT_EVENT_COOKIE, num, requireEvent, text } from "@/lib/event";
@@ -253,7 +253,8 @@ export async function addComment(form: FormData) {
     body,
   });
   if (error) fail(error.message);
-  after(() => notifyComment(taskId, task.assignee_id, user.id, body));
+  // Comment emails are paused to stay within the email plan; they'll return
+  // as push notifications in the phone app (see notifyComment in lib/email.ts).
 
   // Posting an update can also move the ticket along.
   const status = text(form, "status");
@@ -292,7 +293,6 @@ export async function setNotifications(form: FormData) {
     .from("profiles")
     .update({
       notify_assigned: form.get("notify_assigned") === "on",
-      notify_comments: form.get("notify_comments") === "on",
     })
     .eq("id", user.id);
   if (error) {

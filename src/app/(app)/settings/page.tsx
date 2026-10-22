@@ -137,12 +137,6 @@ export default async function SettingsPage({
               title="When I'm assigned a ticket"
               body="Get an email with the ticket and a link to open it."
             />
-            <Toggle
-              name="notify_comments"
-              defaultChecked={prefs?.notify_comments ?? true}
-              title="When someone comments on my tickets"
-              body="Get the comment by email so you can reply quickly."
-            />
             <SubmitButton className="btn-ghost">Save notification settings</SubmitButton>
           </form>
         </section>
