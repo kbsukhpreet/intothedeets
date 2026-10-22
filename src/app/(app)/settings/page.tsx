@@ -169,7 +169,7 @@ export default async function SettingsPage({
       {mode === "team" && (
       <section className="card flex flex-wrap items-center justify-between gap-3 p-6">
         <div>
-          <h2 className="h-display text-2xl">Who&apos;s planning</h2>
+          <h2 className="h-display text-2xl">Invite your team</h2>
           <p className="mt-1 text-sm text-muted">
             Everyone on <strong>{team.name}</strong> can see and work on this event.
           </p>
@@ -179,17 +179,24 @@ export default async function SettingsPage({
       )}
 
       {isCreator && (
-        <details className="card group p-6">
-          <summary className="cursor-pointer list-none text-sm text-muted hover:text-ink">
-            Delete this event…
+        <details className="card group border-[#f1c9c4] p-6">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg border border-[#e7a59d] bg-[#fdf1ef] px-4 py-2 text-sm font-medium text-[#b3261e] transition hover:bg-[#fbe3df] group-open:hidden">
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+              <path d="M4 7h16M9 7V4h6v3M6.5 7l1 13h9l1-13M10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Delete this event
           </summary>
+          <h2 className="hidden font-display text-xl text-[#b3261e] group-open:block">Delete this event</h2>
           <form action={deleteEvent} className="mt-4 space-y-3">
             <p className="text-sm">
               This permanently deletes <strong>{event.name}</strong> with all of its vendors,
               conversations, payments and tasks, for everyone. Type the event name to confirm.
             </p>
             <input name="confirm_name" required placeholder={event.name} className="input" />
-            <SubmitButton className="btn-ghost text-accent-dark" pendingText="Deleting…">
+            <SubmitButton
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#b3261e] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#931f18] disabled:opacity-50"
+              pendingText="Deleting…"
+            >
               Delete event forever
             </SubmitButton>
           </form>
