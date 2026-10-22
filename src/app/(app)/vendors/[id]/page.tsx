@@ -6,6 +6,7 @@ import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO }
 import { Empty, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
 import { SubmitButton } from "@/components/submit-button";
+import { DatePicker } from "@/components/date-picker";
 import { ConfirmButton } from "@/components/confirm-button";
 import {
   addPayment,
@@ -119,7 +120,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                   <option key={c.value} value={c.value}>{c.label}</option>
                 ))}
               </select>
-              <input type="date" name="note_date" defaultValue={today} className="input w-auto" />
+              <DatePicker name="note_date" defaultValue={today} short className="w-auto" ariaLabel="Date of conversation" />
               <SubmitButton className="btn-primary ml-auto">Save note</SubmitButton>
             </div>
           </form>
@@ -190,7 +191,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
               <input name="label" placeholder="Deposit, 2nd payment, final balance…" className="input" required />
               <div className="flex gap-2">
                 <input name="amount" inputMode="decimal" placeholder="$ Amount" className="input" required />
-                <input name="due_date" type="date" className="input" />
+                <DatePicker name="due_date" placeholder="Due date" prefix="Due " short align="right" ariaLabel="Payment due date" />
               </div>
               <div className="flex items-center justify-between">
                 <label className="flex items-center gap-2 text-sm text-muted">

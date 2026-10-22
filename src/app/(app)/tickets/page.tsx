@@ -9,6 +9,7 @@ import { PriorityTag, ProgressBar, STATUS_STYLES, StatusPill } from "@/component
 import { addTask, setTicketAssignee, setTicketStatus } from "../actions";
 import { PersonalTasks } from "./personal-tasks";
 import { Lock } from "@/components/lock";
+import { DatePicker } from "@/components/date-picker";
 
 type Ticket = {
   id: string;
@@ -153,7 +154,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
             <option key={p.value} value={p.value}>{p.label}</option>
           ))}
         </select>
-        <input name="due_date" type="date" className="input w-auto" aria-label="Due date" />
+        <DatePicker name="due_date" placeholder="Due date" prefix="Due " short className="w-auto min-w-[9.5rem]" ariaLabel="Due date" />
         <label
           className="flex cursor-pointer select-none items-center gap-1.5 rounded-lg border border-line px-3 py-2 text-sm text-muted transition hover:bg-paper has-[:checked]:border-accent has-[:checked]:bg-accent-soft has-[:checked]:text-accent-dark"
           title="Only you and the person you assign can see a private ticket"

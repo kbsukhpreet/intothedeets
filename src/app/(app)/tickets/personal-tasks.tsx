@@ -3,6 +3,7 @@ import { addDaysISO, prettyDate, relativeDue, todayISO, TICKET_PRIORITIES } from
 import type { EventRow } from "@/lib/event";
 import { Empty, PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
+import { DatePicker } from "@/components/date-picker";
 import { PriorityTag } from "@/components/ticket-bits";
 import { addTask, toggleTask } from "../actions";
 
@@ -89,7 +90,7 @@ export async function PersonalTasks({
             placeholder="Add a task… e.g. Book hair & makeup trial"
             className="input min-w-[200px] flex-1 border-0 focus:ring-0"
           />
-          <input name="due_date" type="date" className="input w-auto" aria-label="Due date" />
+          <DatePicker name="due_date" placeholder="Due date" prefix="Due " short className="w-auto min-w-[9.5rem]" ariaLabel="Due date" />
           <select name="priority" defaultValue="medium" className="input w-auto" aria-label="Priority">
             {TICKET_PRIORITIES.map((p) => (
               <option key={p.value} value={p.value}>{p.label}</option>

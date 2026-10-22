@@ -26,11 +26,25 @@ export function DatePicker({
   id,
   defaultValue,
   placeholder = "Pick a date",
+  short = false,
+  prefix = "",
+  align = "left",
+  className = "",
+  ariaLabel,
 }: {
   name: string;
   id?: string;
   defaultValue?: string | null;
   placeholder?: string;
+  /** Show "Nov 3" instead of "Tue, November 3, 2026" (handy in tight rows). */
+  short?: boolean;
+  /** Text shown before the chosen date, e.g. "Due ". */
+  prefix?: string;
+  /** Which edge the calendar lines up with. */
+  align?: "left" | "right";
+  /** Extra classes for the field, e.g. "w-auto". */
+  className?: string;
+  ariaLabel?: string;
 }) {
   const now = new Date();
   const todayISO = toISO(now.getFullYear(), now.getMonth(), now.getDate());
@@ -42,6 +56,17 @@ export function DatePicker({
   const [year, setYear] = useState(initial?.y ?? now.getFullYear());
   const [month, setMonth] = useState(initial?.m ?? now.getMonth());
   const wrap = useRef<HTMLDivElement>(null);
+
+  // When the form is reset (e.g. after adding a ticket), go back to the starting value.
+  useEffect(() => {
+    const form = wrap.current?.closest("form");
+    if (!form) return;
+    const start = initial ? toISO(initial.y, initial.m, initial.d) : "";
+    const onReset = () => setValue(start);
+    form.addEventListener("reset", onReset);
+    return () => form.removeEventListener("reset", onReset);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [defaultValue]);
 
   // Close when clicking outside or pressing Escape.
   useEffect(() => {
@@ -60,12 +85,13 @@ export function DatePicker({
 
   const selected = parse(value);
   const label = selected
-    ? new Date(selected.y, selected.m, selected.d).toLocaleDateString("en-US", {
-        weekday: "short",
-        month: "long",
-        day: "numeric",
-        year: "numeric",
-      })
+    ? prefix +
+      new Date(selected.y, selected.m, selected.d).toLocaleDateString(
+        "en-US",
+        short
+          ? { month: "short", day: "numeric", ...(selected.y !== now.getFullYear() ? { year: "numeric" } : {}) }
+          : { weekday: "short", month: "long", day: "numeric", year: "numeric" }
+      )
     : "";
 
   const shiftMonth = (delta: number) => {
@@ -96,7 +122,8 @@ export function DatePicker({
           setView("days");
           setOpen((o) => !o);
         }}
-        className={`input flex items-center justify-between gap-2 text-left ${open ? "border-accent ring-2 ring-accent/15" : ""}`}
+        className={`input flex items-center justify-between gap-2 whitespace-nowrap text-left ${className} ${open ? "border-accent ring-2 ring-accent/15" : ""}`}
+        aria-label={ariaLabel}
         aria-haspopup="dialog"
         aria-expanded={open}
       >
@@ -111,7 +138,7 @@ export function DatePicker({
         <div
           role="dialog"
           aria-label="Choose a date"
-          className="absolute left-0 z-30 mt-2 w-[296px] rounded-2xl border border-line bg-white p-4 shadow-[0_12px_40px_-12px_rgba(34,30,26,0.25)]"
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} z-30 mt-2 w-[296px] rounded-2xl border border-line bg-white p-4 shadow-[0_12px_40px_-12px_rgba(34,30,26,0.25)]`}
         >
           {/* Header */}
           <div className="mb-3 flex items-center justify-between">

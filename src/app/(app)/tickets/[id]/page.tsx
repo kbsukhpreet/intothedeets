@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmButton } from "@/components/confirm-button";
 import { PriorityTag, StatusPill } from "@/components/ticket-bits";
 import { Lock } from "@/components/lock";
+import { DatePicker } from "@/components/date-picker";
 import { addComment, deleteComment, deleteTask, editComment, updateTicket } from "../../actions";
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
@@ -213,7 +214,7 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
             )}
             <div>
               <label className="label" htmlFor="due_date">Due date</label>
-              <input id="due_date" name="due_date" type="date" defaultValue={t.due_date ?? ""} className="input" />
+              <DatePicker id="due_date" name="due_date" defaultValue={t.due_date} placeholder="No due date" align="right" />
             </div>
             <div>
               <label className="label" htmlFor="vendor_id">Vendor (optional)</label>
