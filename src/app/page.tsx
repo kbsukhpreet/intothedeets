@@ -69,7 +69,7 @@ export default async function Home() {
 
   return (
     <main className="mx-auto max-w-5xl px-5">
-      <header className="flex items-center justify-between py-6">
+      <header className="flex items-center justify-between py-5">
         <Logo />
         <Link href="/login" className="btn-ghost">
           Log in
@@ -77,42 +77,34 @@ export default async function Home() {
       </header>
 
       {/* Hero */}
-      <section className="pb-20 pt-14 sm:pb-28 sm:pt-24">
+      <section className="pb-12 pt-8 sm:pb-16 sm:pt-14">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent sm:text-sm">
           Dream it. Plan it. Deet-ail it.
         </p>
-        <h1 className="h-display mt-5 max-w-3xl text-balance text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">
+        <h1 className="h-display mt-4 max-w-3xl text-balance text-5xl leading-[1.02] sm:text-6xl lg:text-7xl">
           Every detail of your event, all in one place.
         </h1>
-        <p className="mt-7 max-w-2xl text-pretty text-lg leading-relaxed text-muted sm:text-xl sm:leading-relaxed">
+        <p className="mt-6 max-w-2xl text-pretty text-lg leading-relaxed text-muted sm:text-xl sm:leading-relaxed">
           Stop digging through texts, emails and spreadsheets. Into the Deets keeps your
           vendors, conversations, payments and to-dos together. Planning with others? Assign
           tickets to your team and track everyone&apos;s progress, so you always know what&apos;s
           done and what&apos;s next.
         </p>
-        <div className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-3">
-          <Link href="/login?mode=signup" className="btn-primary px-6 py-3 text-base">
-            Start planning — it&apos;s free
-          </Link>
-          <Link href="/login" className="text-sm text-muted hover:text-ink">
-            Already have an account? <span className="font-medium text-accent">Log in</span>
-          </Link>
-        </div>
-        <p className="h-display mt-16 text-2xl text-ink/80 sm:text-3xl">
+        <p className="h-display mt-9 text-2xl text-ink/80 sm:text-3xl">
           Made for your next <RotatingWord />
         </p>
       </section>
 
       {/* Features */}
-      <section className="border-t border-line py-20 sm:py-24">
+      <section className="border-t border-line py-12 sm:py-16">
         <p className="text-xs font-medium uppercase tracking-[0.25em] text-accent sm:text-sm">
           What&apos;s inside
         </p>
-        <h2 className="h-display mt-4 max-w-2xl text-balance text-3xl leading-tight sm:text-4xl">
+        <h2 className="h-display mt-3 max-w-2xl text-balance text-3xl leading-tight sm:text-4xl">
           Everything you&apos;d otherwise keep in five different apps.
         </h2>
 
-        <div className="mt-14 grid gap-x-14 gap-y-12 sm:grid-cols-2">
+        <div className="mt-10 grid gap-x-12 gap-y-9 sm:grid-cols-2">
           {FEATURES.map((f) => (
             <div key={f.title} className="flex gap-5">
               <div className="shrink-0">
@@ -141,7 +133,7 @@ export default async function Home() {
       </section>
 
       {/* Closing */}
-      <section className="relative mb-20 overflow-hidden rounded-3xl bg-accent px-7 py-14 text-white sm:px-12 sm:py-16">
+      <section className="relative mb-12 overflow-hidden rounded-3xl bg-accent px-7 py-10 text-white sm:px-12 sm:py-12">
         <div className="absolute -right-12 -top-12 h-56 w-56 rounded-full border-[20px] border-white/10" />
         <div className="absolute -right-28 top-10 h-56 w-56 rounded-full border-[20px] border-white/10" />
         <h2 className="h-display relative max-w-xl text-balance text-3xl leading-tight sm:text-4xl">
@@ -153,13 +145,13 @@ export default async function Home() {
         </p>
         <Link
           href="/login?mode=signup"
-          className="relative mt-8 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-medium text-accent-dark transition hover:bg-paper"
+          className="relative mt-6 inline-flex items-center justify-center rounded-lg bg-white px-6 py-3 text-base font-medium text-accent-dark transition hover:bg-paper"
         >
           Start planning →
         </Link>
       </section>
 
-      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-8 text-sm text-muted">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-6 text-sm text-muted">
         <span>© {new Date().getFullYear()} Into the Deets</span>
         <span className="font-display italic">Dream it. Plan it. Deet-ail it.</span>
       </footer>
