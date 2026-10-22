@@ -5,7 +5,7 @@ import { Logo } from "@/components/logo";
 
 const FEATURES = [
   {
-    title: "Event HQ",
+    title: "Event Dashboard",
     body: "Open the app and see what matters today: what's due, who to follow up with, and how many days are left.",
   },
   {

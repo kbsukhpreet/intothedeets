@@ -39,7 +39,7 @@ type Note = {
   vendor_id: string;
 };
 
-export default async function HQPage() {
+export default async function EventDashboardPage() {
   const { supabase, event, user, mode } = await requireEvent();
   const personal = mode === "personal";
   const today = todayISO();
@@ -100,7 +100,7 @@ export default async function HQPage() {
     .filter((v) => v.status === "contacted")
     .filter((v) => !lastContact.has(v.id) || lastContact.get(v.id)! < weekAgo);
 
-  const greetingName = (profileRes.data?.full_name ?? "").split(" ")[0] || "there";
+  const greetingName = (profileRes.data?.full_name ?? "").split(" ")[0] || "back";
   const isNew = vendors.length === 0;
 
   return (
@@ -109,7 +109,9 @@ export default async function HQPage() {
       <section className="card relative overflow-hidden bg-accent p-7 text-white sm:p-9">
         <div className="absolute -right-10 -top-10 h-48 w-48 rounded-full border-[18px] border-white/10" />
         <div className="absolute -right-24 top-6 h-48 w-48 rounded-full border-[18px] border-white/10" />
-        <p className="text-sm text-white/80">Hi {greetingName} 👋</p>
+        <p className="h-display relative max-w-[85%] text-2xl leading-snug sm:text-3xl">
+          {personal ? `Welcome ${greetingName}!` : `Welcome ${greetingName} to ${event.name}!`}
+        </p>
         <p className="mt-4 text-xs font-medium uppercase tracking-[0.2em] text-white/70">{event.event_type}</p>
         {days !== null ? (
           <>

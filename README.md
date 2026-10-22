@@ -12,7 +12,7 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 - **Tickets:** numbered (#12), with assignee, status (To do / In progress / Blocked / Done), priority, due date, description, linked vendor, and comments (editable by their author)
 - **Email notifications** (via Resend) when you're assigned a ticket; each person can turn them off in Settings. Comment notifications are planned for the phone app
 - **Tickets dashboard:** progress for each person, a board and list view, and filters for me / a teammate / unassigned / an event
-- **Event HQ:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
+- **Event Dashboard:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
 - **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too
 - **Budget:** contract, paid and remaining per vendor, budget progress, and a payment timeline
 - **Settings:** edit event details, delete an event
@@ -55,7 +55,7 @@ npm run dev                  # open http://localhost:3000
 
 ## Roadmap
 
-1. ✅ Foundation: accounts, teams, events, tickets dashboard, HQ, vendors, budget
+1. ✅ Foundation: accounts, teams, events, tickets dashboard, Event Dashboard, vendors, budget
 2. Drag-and-drop board; @mentions in comments
 3. Brain Dump: type messy thoughts, and AI sorts them into tasks, vendor notes and reminders
 4. "What am I forgetting?" assistant

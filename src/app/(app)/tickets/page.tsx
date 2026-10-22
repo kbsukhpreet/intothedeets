@@ -113,7 +113,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
         <div>
           <p className="text-sm uppercase tracking-[0.18em] text-accent">{team.name}</p>
           <h1 className="h-display mt-1 text-4xl">Tickets</h1>
-          <p className="mt-1 text-muted">Who&apos;s doing what, and how far along it is.</p>
+          <p className="mt-1 text-muted">Assign tickets to your team, and take a look at the progress.</p>
         </div>
         <div className="flex rounded-lg border border-line bg-white p-0.5 text-sm">
           <Link href={q({ view: null })} className={`rounded-md px-3 py-1.5 ${view === "board" ? "bg-accent-soft text-accent-dark" : "text-muted"}`}>
@@ -155,10 +155,10 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
         <SubmitButton pendingText="Adding…">Add</SubmitButton>
       </form>
 
-      {/* Team progress */}
+      {/* Team Progress */}
       <section className="card p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <h2 className="h-display text-2xl">Team progress</h2>
+          <h2 className="h-display text-2xl">Team Progress</h2>
           {teamEvents.length > 1 && (
             <FilterSelect
               param="event"
@@ -377,7 +377,7 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
       )}
 
       <p className="text-xs text-muted">
-        Tip: click a person under Team progress to see only their tickets. Open a ticket to add details
+        Tip: click a person under Team Progress to see only their tickets. Open a ticket to add details
         and comments. <StatusPill status="blocked" /> means someone is waiting on something.
       </p>
     </div>

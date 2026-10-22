@@ -1,5 +1,6 @@
 import { EVENT_TYPES } from "@/lib/format";
 import { SubmitButton } from "@/components/submit-button";
+import { DatePicker } from "@/components/date-picker";
 
 export function EventForm({
   action,
@@ -73,7 +74,7 @@ export function EventForm({
         </div>
         <div>
           <label className="label" htmlFor="event_date">Date (if you know it)</label>
-          <input id="event_date" name="event_date" type="date" className="input" />
+          <DatePicker id="event_date" name="event_date" placeholder="Choose a date" />
         </div>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">

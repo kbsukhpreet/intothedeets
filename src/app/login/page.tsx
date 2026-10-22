@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: { searchParams: Search
       <div className={`card w-full p-7 ${isSignup ? "max-w-md" : "max-w-sm"}`}>
         <h1 className="h-display text-3xl">{isSignup ? "Create your account" : "Welcome back"}</h1>
         <p className="mt-1 text-sm text-muted">
-          {isSignup ? "Get every detail of your event organized in minutes." : "Log in to your event HQ."}
+          {isSignup ? "Get every detail of your event organized in minutes." : "Log in to your event dashboard."}
         </p>
 
         {next.startsWith("/invite/") && !params.error && (

@@ -6,7 +6,7 @@ export default function NotFound() {
       <h1 className="h-display text-4xl">We couldn&apos;t find that</h1>
       <p className="mt-2 text-muted">The page may have moved or been deleted.</p>
       <Link href="/hq" className="btn-primary mt-6">
-        Back to HQ
+        Back to Event Dashboard
       </Link>
     </main>
   );

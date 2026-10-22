@@ -69,7 +69,7 @@ export default async function InvitePage({
         ) : invite.already_member ? (
           <>
             <h1 className="h-display text-3xl">You&apos;re already on {invite.team_name}</h1>
-            <a href="/hq" className="btn-primary mt-6 w-full">Go to my HQ</a>
+            <a href="/hq" className="btn-primary mt-6 w-full">Go to my Event Dashboard</a>
           </>
         ) : (
           <>

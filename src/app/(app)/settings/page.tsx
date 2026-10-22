@@ -3,6 +3,7 @@ import Link from "next/link";
 import { EVENT_TYPES } from "@/lib/format";
 import { PageHeader } from "@/components/page-header";
 import { SubmitButton } from "@/components/submit-button";
+import { DatePicker } from "@/components/date-picker";
 import { VIEW_MODES, ModeIcon } from "@/components/view-mode-choice";
 import { deleteEvent, setNotifications, setViewMode, updateEvent } from "../actions";
 
@@ -99,7 +100,7 @@ export default async function SettingsPage({
           </div>
           <div>
             <label className="label" htmlFor="date">Event date</label>
-            <input id="date" name="event_date" type="date" defaultValue={event.event_date ?? ""} className="input" />
+            <DatePicker id="date" name="event_date" defaultValue={event.event_date} placeholder="Choose a date" />
           </div>
           <div>
             <label className="label" htmlFor="budget">Total budget</label>

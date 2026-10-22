@@ -47,7 +47,7 @@ const ICONS: Record<string, React.ReactNode> = {
 };
 
 export const NAV = [
-  { href: "/hq", label: "HQ", icon: "home" },
+  { href: "/hq", label: "Event Dashboard", shortLabel: "Dashboard", icon: "home" },
   { href: "/tickets", label: "Tickets", icon: "tickets" },
   { href: "/vendors", label: "Vendors", icon: "vendors" },
   { href: "/budget", label: "Budget", icon: "budget" },
@@ -125,7 +125,7 @@ export function BottomNav({ mode }: { mode: Mode }) {
             }`}
           >
             <Icon name={item.icon} />
-            {item.label}
+            {"shortLabel" in item && item.shortLabel ? item.shortLabel : item.label}
           </Link>
         ))}
       </div>
