@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Logo } from "@/components/logo";
+import { RotatingWord } from "@/components/rotating-word";
 
 const FEATURES = [
   {
@@ -21,8 +22,6 @@ const FEATURES = [
     body: "Invite co-hosts, family or clients to collaborate. Planners can keep every event in one account.",
   },
 ];
-
-const EVENT_EXAMPLES = ["Weddings", "Birthdays", "Corporate events", "Showers", "Galas", "Reunions"];
 
 export default async function Home() {
   const supabase = await createClient();
@@ -58,13 +57,9 @@ export default async function Home() {
             Start planning — it&apos;s free
           </Link>
         </div>
-        <div className="mt-10 flex flex-wrap gap-2">
-          {EVENT_EXAMPLES.map((e) => (
-            <span key={e} className="rounded-full border border-line bg-white px-3 py-1 text-sm text-muted">
-              {e}
-            </span>
-          ))}
-        </div>
+        <p className="h-display mt-12 text-2xl text-ink/80 sm:text-3xl">
+          Made for your next <RotatingWord />
+        </p>
       </section>
 
       <section className="grid gap-4 pb-24 sm:grid-cols-2">
