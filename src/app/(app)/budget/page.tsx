@@ -467,7 +467,7 @@ function Expenses({
             <thead>
               <tr className="border-b border-line text-left text-xs uppercase tracking-wider text-muted">
                 <th className="px-4 py-2.5 font-medium">Date</th>
-                <th className="px-3 py-2.5 font-medium">What</th>
+                <th className="px-3 py-2.5 font-medium">Expense</th>
                 <th className="px-3 py-2.5 font-medium">Category</th>
                 <th className="px-3 py-2.5 font-medium">Paid by</th>
                 <th className="px-3 py-2.5 font-medium">Method</th>

@@ -12,7 +12,7 @@ export async function GET() {
   const people = await teamPeople(supabase, event.team_id, user.id);
   const { rows } = await loadExpenses(supabase, event.id, people);
 
-  const header = ["Date", "What", "Category", "Amount", "Paid by", "Method", "Vendor", "Type", "Notes"];
+  const header = ["Date", "Expense", "Category", "Amount", "Paid by", "Method", "Vendor", "Type", "Notes"];
   const lines = [
     header.join(","),
     ...rows.map((r) =>
