@@ -103,9 +103,9 @@ export async function deleteVendorNote(form: FormData) {
 // ── Payments ─────────────────────────────────────────────────
 
 export async function addPayment(form: FormData) {
-  const { supabase, event } = await requireEvent();
+  const { supabase, event, user } = await requireEvent();
   const paid = form.get("paid") === "on";
-  const { error } = await supabase.from("payments").insert({
+  const row = {
     event_id: event.id,
     vendor_id: text(form, "vendor_id"),
     label: text(form, "label") ?? "Payment",
@@ -113,18 +113,31 @@ export async function addPayment(form: FormData) {
     due_date: text(form, "due_date"),
     paid,
     paid_on: paid ? todayISO() : null,
-  });
+  };
+  // Record who paid (the person ticking it off). Falls back gracefully if upgrade 8 isn't run yet.
+  let { error } = await supabase.from("payments").insert(paid ? { ...row, paid_by_user_id: user.id } : row);
+  if (error && /paid_by_user_id/.test(error.message)) ({ error } = await supabase.from("payments").insert(row));
   if (error) fail(error.message);
   refresh();
 }
 
 export async function togglePayment(form: FormData) {
-  const { supabase } = await requireEvent();
+  const { supabase, user } = await requireEvent();
+  const id = text(form, "id") ?? fail("Missing payment");
   const paid = form.get("paid") === "true";
-  const { error } = await supabase
-    .from("payments")
-    .update({ paid, paid_on: paid ? todayISO() : null })
-    .eq("id", text(form, "id") ?? fail("Missing payment"));
+  const base = { paid, paid_on: paid ? todayISO() : null };
+
+  // When ticking a payment off, assume the person ticking it paid, unless someone is already recorded.
+  let extra: Record<string, string> = {};
+  if (paid) {
+    const { data: current, error: readErr } = await supabase
+      .from("payments")
+      .select("paid_by_user_id, paid_by_name")
+      .eq("id", id)
+      .maybeSingle();
+    if (!readErr && current && !current.paid_by_user_id && !current.paid_by_name) extra = { paid_by_user_id: user.id };
+  }
+  const { error } = await supabase.from("payments").update({ ...base, ...extra }).eq("id", id);
   if (error) fail(error.message);
   refresh();
 }
@@ -512,4 +525,79 @@ export async function setItinerarySharing(form: FormData) {
   const { error } = await supabase.from("events").update({ itinerary_share_token: token }).eq("id", event.id);
   if (error) fail(error.message);
   refresh();
+}
+
+// ── Expenses ─────────────────────────────────────────────────
+
+function payerFields(form: FormData) {
+  const v = text(form, "paid_by") ?? "";
+  if (v.startsWith("user:")) return { paid_by_user_id: v.slice(5), paid_by_name: null };
+  if (v.startsWith("name:")) return { paid_by_user_id: null, paid_by_name: v.slice(5) };
+  if (v === "other") return { paid_by_user_id: null, paid_by_name: text(form, "paid_by_name") };
+  return { paid_by_user_id: null, paid_by_name: null };
+}
+
+function missingUpgrade8(message: string) {
+  return /expenses|paid_by|method/.test(message)
+    ? "The database is missing upgrade 8 (008_expenses.sql). Run it in Supabase, then try again."
+    : message;
+}
+
+export async function addExpense(form: FormData) {
+  const { supabase, event, user } = await requireEvent();
+  const { error } = await supabase.from("expenses").insert({
+    event_id: event.id,
+    spent_on: text(form, "spent_on") ?? todayISO(),
+    description: text(form, "description") ?? fail("What was this expense for?"),
+    category: text(form, "category") ?? "Other",
+    amount: num(form, "amount") ?? fail("Enter an amount"),
+    method: text(form, "method"),
+    vendor_id: text(form, "vendor_id"),
+    notes: text(form, "notes"),
+    created_by: user.id,
+    ...payerFields(form),
+  });
+  if (error) fail(missingUpgrade8(error.message));
+  refresh();
+  redirect("/budget?tab=expenses&added=1");
+}
+
+export async function updateExpense(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("expenses")
+    .update({
+      spent_on: text(form, "spent_on") ?? todayISO(),
+      description: text(form, "description") ?? fail("What was this expense for?"),
+      category: text(form, "category") ?? "Other",
+      amount: num(form, "amount") ?? fail("Enter an amount"),
+      method: text(form, "method"),
+      vendor_id: text(form, "vendor_id"),
+      notes: text(form, "notes"),
+      ...payerFields(form),
+    })
+    .eq("id", text(form, "id") ?? fail("Missing expense"));
+  if (error) fail(missingUpgrade8(error.message));
+  refresh();
+  redirect("/budget?tab=expenses");
+}
+
+export async function deleteExpense(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase.from("expenses").delete().eq("id", text(form, "id") ?? fail("Missing expense"));
+  if (error) fail(error.message);
+  refresh();
+  redirect("/budget?tab=expenses");
+}
+
+/** Who paid / when / how for a vendor payment that's already marked paid. */
+export async function updatePaymentDetails(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("payments")
+    .update({ paid_on: text(form, "spent_on"), method: text(form, "method"), ...payerFields(form) })
+    .eq("id", text(form, "id") ?? fail("Missing payment"));
+  if (error) fail(missingUpgrade8(error.message));
+  refresh();
+  redirect("/budget?tab=expenses");
 }

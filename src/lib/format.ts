@@ -188,3 +188,22 @@ export function longDate(day: string | null | undefined) {
   if (!day) return "";
   return parseDay(day).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
 }
+
+export const EXPENSE_CATEGORIES = [
+  "Venue",
+  "Catering",
+  "Attire",
+  "Beauty",
+  "Decor & florals",
+  "Entertainment",
+  "Photo & video",
+  "Stationery",
+  "Gifts & favors",
+  "Travel & lodging",
+  "Transportation",
+  "Rentals",
+  "Tips",
+  "Other",
+] as const;
+
+export const PAYMENT_METHODS = ["Card", "Cash", "Check", "Zelle", "Venmo", "Bank transfer", "Other"] as const;
