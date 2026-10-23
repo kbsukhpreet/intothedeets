@@ -37,7 +37,12 @@ export function AlreadyPaid({
         />
         Already paid
       </label>
-      {paid && <PaidByField people={people} typedNames={typedNames} defaultValue={`user:${meId}`} meId={meId} />}
+      {paid && (
+        <>
+          <p className="text-xs text-muted">The date above will be saved as the date it was paid.</p>
+          <PaidByField people={people} typedNames={typedNames} defaultValue={`user:${meId}`} meId={meId} />
+        </>
+      )}
     </div>
   );
 }

@@ -105,14 +105,16 @@ export async function deleteVendorNote(form: FormData) {
 export async function addPayment(form: FormData) {
   const { supabase, event, user } = await requireEvent();
   const paid = form.get("paid") === "on";
+  const date = text(form, "due_date");
   const row = {
     event_id: event.id,
     vendor_id: text(form, "vendor_id"),
     label: text(form, "label") ?? "Payment",
     amount: num(form, "amount") ?? fail("Enter an amount"),
-    due_date: text(form, "due_date"),
+    due_date: date,
     paid,
-    paid_on: paid ? todayISO() : null,
+    // If it's already paid, the date entered is when it was paid (today if left blank).
+    paid_on: paid ? date ?? todayISO() : null,
   };
   // Record who paid (the person ticking it off). Falls back gracefully if upgrade 8 isn't run yet.
   const payer = text(form, "paid_by") ? payerFields(form) : { paid_by_user_id: user.id };
@@ -126,7 +128,7 @@ export async function togglePayment(form: FormData) {
   const { supabase, user } = await requireEvent();
   const id = text(form, "id") ?? fail("Missing payment");
   const paid = form.get("paid") === "true";
-  const base = { paid, paid_on: paid ? todayISO() : null };
+  const base: { paid: boolean; paid_on: string | null } = { paid, paid_on: paid ? todayISO() : null };
 
   // When ticking a payment off, assume the person ticking it paid, unless someone is already recorded.
   let extra: Record<string, string> = {};
@@ -137,6 +139,10 @@ export async function togglePayment(form: FormData) {
       .eq("id", id)
       .maybeSingle();
     if (!readErr && current && !current.paid_by_user_id && !current.paid_by_name) extra = { paid_by_user_id: user.id };
+
+    // Ticking off a payment that was due on a past date: assume it was paid on its due date.
+    const { data: due } = await supabase.from("payments").select("due_date").eq("id", id).maybeSingle();
+    if (due?.due_date && due.due_date <= todayISO()) base.paid_on = due.due_date;
   }
   const { error } = await supabase.from("payments").update({ ...base, ...extra }).eq("id", id);
   if (error) fail(error.message);
