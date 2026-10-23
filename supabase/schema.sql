@@ -957,3 +957,14 @@ create policy "members manage expenses" on public.expenses
   with check (public.is_event_member(event_id));
 
 notify pgrst, 'reload schema';
+
+
+-- ═════════════════════════════════════════════════════════════
+-- Version 9: duplicate expense checks
+-- ═════════════════════════════════════════════════════════════
+
+-- Entries someone has confirmed are NOT duplicates, so they stop being flagged.
+alter table public.expenses add column if not exists duplicate_ok boolean not null default false;
+alter table public.payments add column if not exists duplicate_ok boolean not null default false;
+
+notify pgrst, 'reload schema';

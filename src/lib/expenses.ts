@@ -18,19 +18,24 @@ export type ExpenseRow = {
   vendorId: string | null;
   vendorName: string | null;
   notes: string | null;
+  duplicateOk: boolean;
 };
 
 export async function loadExpenses(supabase: Supabase, eventId: string, people: Person[]) {
+  // Ask for the "not a duplicate" flag, but still work if upgrade 9 hasn't been run yet.
+  const expCols = "id, spent_on, description, category, amount, paid_by_user_id, paid_by_name, method, vendor_id, notes";
+  const payCols = "id, label, amount, paid, paid_on, due_date, vendor_id, paid_by_user_id, paid_by_name, method";
+  const getExp = async () => {
+    const r = await supabase.from("expenses").select(`${expCols}, duplicate_ok`).eq("event_id", eventId);
+    return r.error ? await supabase.from("expenses").select(expCols).eq("event_id", eventId) : r;
+  };
+  const getPay = async () => {
+    const r = await supabase.from("payments").select(`${payCols}, duplicate_ok`).eq("event_id", eventId).eq("paid", true);
+    return r.error ? await supabase.from("payments").select(payCols).eq("event_id", eventId).eq("paid", true) : r;
+  };
   const [{ data: exp }, { data: pay }, { data: vendors }] = await Promise.all([
-    supabase
-      .from("expenses")
-      .select("id, spent_on, description, category, amount, paid_by_user_id, paid_by_name, method, vendor_id, notes")
-      .eq("event_id", eventId),
-    supabase
-      .from("payments")
-      .select("id, label, amount, paid, paid_on, due_date, vendor_id, paid_by_user_id, paid_by_name, method")
-      .eq("event_id", eventId)
-      .eq("paid", true),
+    getExp(),
+    getPay(),
     supabase.from("vendors").select("id, name, category").eq("event_id", eventId),
   ]);
 
@@ -57,6 +62,7 @@ export async function loadExpenses(supabase: Supabase, eventId: string, people: 
       vendorId: e.vendor_id,
       vendorName: e.vendor_id ? vendor.get(e.vendor_id)?.name ?? null : null,
       notes: e.notes,
+      duplicateOk: Boolean((e as { duplicate_ok?: boolean }).duplicate_ok),
     })),
     ...(pay ?? []).map((p) => {
       const v = p.vendor_id ? vendor.get(p.vendor_id) : null;
@@ -73,6 +79,7 @@ export async function loadExpenses(supabase: Supabase, eventId: string, people: 
         vendorId: p.vendor_id,
         vendorName: v?.name ?? null,
         notes: null,
+        duplicateOk: Boolean((p as { duplicate_ok?: boolean }).duplicate_ok),
       };
     }),
   ];

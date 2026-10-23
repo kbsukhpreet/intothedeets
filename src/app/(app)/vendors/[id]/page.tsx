@@ -22,8 +22,15 @@ import {
   updateVendor,
 } from "../../actions";
 
-export default async function VendorPage({ params }: { params: Promise<{ id: string }> }) {
+export default async function VendorPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<{ possible_dup?: string }>;
+}) {
   const { id } = await params;
+  const { possible_dup } = await searchParams;
   const { supabase, event, user, mode } = await requireEvent();
   const personal = mode === "personal";
 
@@ -64,6 +71,16 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
       <Link href="/vendors" className="inline-flex items-center gap-2 rounded-full border border-line bg-white px-4 py-2 text-sm font-medium text-ink shadow-[0_1px_0_rgba(0,0,0,0.03)] transition hover:border-accent/50 hover:text-accent">
         <span aria-hidden className="text-base leading-none">←</span> All Vendors
       </Link>
+
+      {possible_dup && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-soft px-5 py-3">
+          <p className="text-sm text-amber">
+            <strong className="font-semibold">Heads up:</strong> an expense with the same amount is already logged. It might
+            be the same payment.
+          </p>
+          <Link href="/budget?tab=expenses&review=1" className="btn-ghost py-1.5 text-sm">Review duplicates</Link>
+        </div>
+      )}
 
       {/* Header */}
       <section className="flex flex-wrap items-start justify-between gap-4">

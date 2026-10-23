@@ -122,6 +122,17 @@ export async function addPayment(form: FormData) {
   if (error && /paid_by_user_id/.test(error.message)) ({ error } = await supabase.from("payments").insert(row));
   if (error) fail(error.message);
   refresh();
+
+  // Heads-up if this looks like something already in Expenses.
+  if (paid && row.vendor_id) {
+    const { data: same } = await supabase
+      .from("expenses")
+      .select("id")
+      .eq("event_id", event.id)
+      .eq("amount", row.amount)
+      .limit(1);
+    if (same && same.length) redirect(`/vendors/${row.vendor_id}?possible_dup=1`);
+  }
 }
 
 export async function togglePayment(form: FormData) {
@@ -607,4 +618,34 @@ export async function updatePaymentDetails(form: FormData) {
   if (error) fail(missingUpgrade8(error.message));
   refresh();
   redirect("/budget?tab=expenses");
+}
+
+// ── Duplicate review ─────────────────────────────────────────
+
+async function setDuplicateOk(supabase: Awaited<ReturnType<typeof requireEvent>>["supabase"], key: string) {
+  const [kind, id] = key.split(":");
+  const table = kind === "p" ? "payments" : "expenses";
+  return supabase.from(table).update({ duplicate_ok: true }).eq("id", id);
+}
+
+/** "Not a duplicate": stop flagging this pair. */
+export async function markNotDuplicate(form: FormData) {
+  const { supabase } = await requireEvent();
+  for (const key of [text(form, "a"), text(form, "b")]) {
+    if (!key) continue;
+    const { error } = await setDuplicateOk(supabase, key);
+    if (error) fail(/duplicate_ok/.test(error.message) ? "The database is missing upgrade 9 (009_duplicate_checks.sql). Run it in Supabase, then try again." : error.message);
+  }
+  refresh();
+  redirect("/budget?tab=expenses&review=1");
+}
+
+/** Remove one entry of a duplicate pair. */
+export async function removeDuplicate(form: FormData) {
+  const { supabase } = await requireEvent();
+  const [kind, id] = (text(form, "key") ?? fail("Missing entry")).split(":");
+  const { error } = await supabase.from(kind === "p" ? "payments" : "expenses").delete().eq("id", id);
+  if (error) fail(error.message);
+  refresh();
+  redirect("/budget?tab=expenses&review=1&removed=1");
 }

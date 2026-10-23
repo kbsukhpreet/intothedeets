@@ -17,7 +17,7 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 - **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too
 - **Budget & Expenses** (three tabs):
   - **Overview:** budget vs committed vs spent, spent by person, spent by category, and each vendor's contract/paid/remaining
-  - **Expenses:** a table of everything spent (date, what, category, who paid, method, amount). Paid vendor payments appear automatically; the payer can be a teammate or a typed-in name like "Groom's parents". Filters and CSV download
+  - **Expenses:** a table of everything spent (date, what, category, who paid, method, amount). Paid vendor payments appear automatically; the payer can be a teammate or a typed-in name like "Groom's parents". Filters and CSV download. Possible duplicates (same amount + same vendor, shared name, or same category within 14 days) are flagged with a one-click review
   - **Payment schedule:** upcoming, past-due and paid vendor payments
 - **Itinerary:** multiple days (welcome dinner, ceremony day, brunch…), a timeline per day with times, locations, notes and who's responsible (teammate or vendor), a "just mine" filter, a print view, and a view-only share link for vendors and guests
 - **Settings:** edit event details, delete an event

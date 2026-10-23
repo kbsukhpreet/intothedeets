@@ -16,7 +16,16 @@ import { ConfirmButton } from "@/components/confirm-button";
 import { DatePicker } from "@/components/date-picker";
 import { FilterSelect } from "@/components/auto-submit-select";
 import { PaidByField } from "@/components/paid-by-field";
-import { addExpense, deleteExpense, togglePayment, updateExpense, updatePaymentDetails } from "../actions";
+import {
+  addExpense,
+  deleteExpense,
+  markNotDuplicate,
+  removeDuplicate,
+  togglePayment,
+  updateExpense,
+  updatePaymentDetails,
+} from "../actions";
+import { findDuplicates } from "@/lib/duplicates";
 
 type Payment = {
   id: string;
@@ -33,7 +42,7 @@ type Tab = "overview" | "expenses" | "schedule";
 export default async function BudgetPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string; who?: string; cat?: string; edit?: string; add?: string; added?: string }>;
+  searchParams: Promise<{ tab?: string; who?: string; cat?: string; edit?: string; add?: string; added?: string; review?: string; removed?: string }>;
 }) {
   const params = await searchParams;
   const tab: Tab = params.tab === "expenses" ? "expenses" : params.tab === "schedule" ? "schedule" : "overview";
@@ -313,7 +322,7 @@ function Expenses({
   meId,
   spent,
 }: {
-  params: { who?: string; cat?: string; edit?: string; add?: string; added?: string };
+  params: { who?: string; cat?: string; edit?: string; add?: string; added?: string; review?: string; removed?: string };
   rows: ExpenseRow[];
   people: { id: string; name: string }[];
   typedNames: string[];
@@ -324,6 +333,8 @@ function Expenses({
   const shown = rows.filter((r) => (!params.who || r.payerKey === (params.who === "none" ? "" : params.who)) && (!params.cat || r.category === params.cat));
   const shownTotal = shown.reduce((s, r) => s + r.amount, 0);
   const editing = params.edit ? rows.find((r) => r.key === params.edit) : undefined;
+  const { pairs, flagged } = findDuplicates(rows);
+  const byKey = new Map(rows.map((r) => [r.key, r]));
 
   const payerOptions = [
     { value: "all", label: "Everyone" },
@@ -356,6 +367,78 @@ function Expenses({
 
       {params.added && !params.add && (
         <p className="rounded-lg bg-sage-soft px-3 py-2 text-sm text-sage">Expense added.</p>
+      )}
+      {params.removed && <p className="rounded-lg bg-sage-soft px-3 py-2 text-sm text-sage">Removed the duplicate.</p>}
+
+      {/* Possible duplicates */}
+      {pairs.length > 0 && !params.review && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-amber-soft px-5 py-3">
+          <p className="text-sm text-amber">
+            <strong className="font-semibold">
+              {pairs.length} possible duplicate{pairs.length === 1 ? "" : "s"}
+            </strong>
+            . The same amount looks like it was logged twice.
+          </p>
+          <Link href="/budget?tab=expenses&review=1" className="btn-ghost py-1.5 text-sm">Review</Link>
+        </div>
+      )}
+      {params.review && (
+        <section className="card p-5">
+          <div className="flex items-center justify-between">
+            <h2 className="h-display text-xl">Possible duplicates</h2>
+            <Link href="/budget?tab=expenses" className="text-sm text-muted hover:text-ink">Done</Link>
+          </div>
+          {pairs.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">All clear. No possible duplicates right now.</p>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted">
+                Tip: keep the <strong className="font-medium text-ink">vendor payment</strong> when you can. It stays
+                linked to the vendor&apos;s page and payment schedule.
+              </p>
+              <ul className="mt-4 space-y-4">
+                {pairs.map(([ka, kb]) => {
+                  const a = byKey.get(ka)!;
+                  const b = byKey.get(kb)!;
+                  return (
+                    <li key={`${ka}-${kb}`} className="rounded-2xl border border-line p-3">
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {[a, b].map((r) => (
+                          <div key={r.key} className="flex flex-col justify-between gap-3 rounded-xl bg-paper p-3">
+                            <div>
+                              <p className="text-xs text-muted">
+                                {r.date ? prettyDate(r.date, true) : "No date"} ·{" "}
+                                {r.source === "payment" ? "Vendor payment" : "Expense"}
+                              </p>
+                              <p className="mt-0.5 font-medium">{r.description}</p>
+                              <p className="text-sm text-muted">
+                                {money(r.amount)} · {r.payer}
+                              </p>
+                            </div>
+                            <form action={removeDuplicate}>
+                              <input type="hidden" name="key" value={r.key} />
+                              <ConfirmButton
+                                message={`Remove "${r.description}" (${money(r.amount)})?`}
+                                className="text-xs font-medium text-[#b3261e] hover:underline"
+                              >
+                                Remove this one
+                              </ConfirmButton>
+                            </form>
+                          </div>
+                        ))}
+                      </div>
+                      <form action={markNotDuplicate} className="mt-3 text-right">
+                        <input type="hidden" name="a" value={ka} />
+                        <input type="hidden" name="b" value={kb} />
+                        <button className="text-xs text-muted hover:text-ink">Not a duplicate, keep both</button>
+                      </form>
+                    </li>
+                  );
+                })}
+              </ul>
+            </>
+          )}
+        </section>
       )}
 
       {/* Add / edit form */}
@@ -400,6 +483,14 @@ function Expenses({
                     <span className="font-medium">{r.description}</span>
                     {r.source === "payment" && (
                       <span className="ml-2 rounded-full bg-paper px-2 py-0.5 text-[11px] text-muted">Vendor payment</span>
+                    )}
+                    {flagged.has(r.key) && (
+                      <Link
+                        href="/budget?tab=expenses&review=1"
+                        className="ml-2 rounded-full bg-amber-soft px-2 py-0.5 text-[11px] font-medium text-amber hover:underline"
+                      >
+                        Possible duplicate
+                      </Link>
                     )}
                     {r.notes && <span className="block text-xs text-muted">{r.notes}</span>}
                   </td>
