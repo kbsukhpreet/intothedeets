@@ -415,3 +415,101 @@ export async function updateProfile(form: FormData) {
   refresh();
   redirect("/settings?saved=profile#profile");
 }
+
+// ── Itinerary ────────────────────────────────────────────────
+
+function whoFields(form: FormData) {
+  const who = text(form, "who") ?? "";
+  return {
+    responsible_user_id: who.startsWith("user:") ? who.slice(5) : null,
+    vendor_id: who.startsWith("vendor:") ? who.slice(7) : null,
+  };
+}
+
+function itemFields(form: FormData) {
+  return {
+    start_time: text(form, "start_time"),
+    end_time: text(form, "end_time"),
+    title: text(form, "title") ?? fail("Give this item a name"),
+    location: text(form, "location"),
+    notes: text(form, "notes"),
+    ...whoFields(form),
+  };
+}
+
+export async function addItineraryDay(form: FormData) {
+  const { supabase, event } = await requireEvent();
+  const { data, error } = await supabase
+    .from("itinerary_days")
+    .insert({
+      event_id: event.id,
+      title: text(form, "title") ?? fail("Give this day a name"),
+      day_date: text(form, "day_date"),
+    })
+    .select("id")
+    .single();
+  if (error) {
+    const hint = /itinerary_days/.test(error.message)
+      ? "The database is missing upgrade 7 (007_itinerary.sql). Run it in Supabase, then try again."
+      : error.message;
+    fail(hint);
+  }
+  refresh();
+  redirect(`/itinerary?day=${data!.id}`);
+}
+
+export async function updateItineraryDay(form: FormData) {
+  const { supabase } = await requireEvent();
+  const id = text(form, "id") ?? fail("Missing day");
+  const { error } = await supabase
+    .from("itinerary_days")
+    .update({ title: text(form, "title") ?? fail("Give this day a name"), day_date: text(form, "day_date") })
+    .eq("id", id);
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function deleteItineraryDay(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase.from("itinerary_days").delete().eq("id", text(form, "id") ?? fail("Missing day"));
+  if (error) fail(error.message);
+  refresh();
+  redirect("/itinerary");
+}
+
+export async function addItineraryItem(form: FormData) {
+  const { supabase, event } = await requireEvent();
+  const { error } = await supabase.from("itinerary_items").insert({
+    event_id: event.id,
+    day_id: text(form, "day_id") ?? fail("Missing day"),
+    ...itemFields(form),
+  });
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function updateItineraryItem(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase
+    .from("itinerary_items")
+    .update(itemFields(form))
+    .eq("id", text(form, "id") ?? fail("Missing item"));
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function deleteItineraryItem(form: FormData) {
+  const { supabase } = await requireEvent();
+  const { error } = await supabase.from("itinerary_items").delete().eq("id", text(form, "id") ?? fail("Missing item"));
+  if (error) fail(error.message);
+  refresh();
+}
+
+export async function setItinerarySharing(form: FormData) {
+  const { supabase, event } = await requireEvent();
+  const on = text(form, "on") === "1";
+  const token = on ? crypto.randomUUID().replace(/-/g, "") + crypto.randomUUID().replace(/-/g, "").slice(0, 8) : null;
+  const { error } = await supabase.from("events").update({ itinerary_share_token: token }).eq("id", event.id);
+  if (error) fail(error.message);
+  refresh();
+}

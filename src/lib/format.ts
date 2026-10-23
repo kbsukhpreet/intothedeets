@@ -165,3 +165,26 @@ export function initials(name: string) {
   const parts = name.trim().split(/\s+/);
   return ((parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] : "")).toUpperCase() || "?";
 }
+
+/** "19:00:00" → "7:00 PM" */
+export function formatTime(t: string | null | undefined) {
+  if (!t) return "";
+  const [h, m] = t.split(":").map(Number);
+  const suffix = h >= 12 ? "PM" : "AM";
+  const hour = h % 12 === 0 ? 12 : h % 12;
+  return `${hour}:${String(m).padStart(2, "0")} ${suffix}`;
+}
+
+/** Every 15 minutes of the day, for time dropdowns. Value is "HH:MM". */
+export const TIME_OPTIONS = Array.from({ length: 96 }, (_, i) => {
+  const h = Math.floor(i / 4);
+  const m = (i % 4) * 15;
+  const value = `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  return { value, label: formatTime(value) };
+});
+
+/** "2027-09-04" → "Saturday, September 4, 2027" */
+export function longDate(day: string | null | undefined) {
+  if (!day) return "";
+  return parseDay(day).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+}

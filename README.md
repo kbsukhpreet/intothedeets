@@ -16,6 +16,7 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 - **Event Dashboard:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
 - **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too
 - **Budget:** contract, paid and remaining per vendor, budget progress, and a payment timeline
+- **Itinerary:** multiple days (welcome dinner, ceremony day, brunch…), a timeline per day with times, locations, notes and who's responsible (teammate or vendor), a "just mine" filter, a print view, and a view-only share link for vendors and guests
 - **Settings:** edit event details, delete an event
 
 All data is protected by database security rules: people only see their own teams' events.

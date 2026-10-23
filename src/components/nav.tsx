@@ -38,6 +38,12 @@ const ICONS: Record<string, React.ReactNode> = {
       <path d="M2.5 19c.5-3 2.7-4.5 5.5-4.5s5 1.5 5.5 4.5M13 15c.9-.4 1.9-.5 3-.5 2.8 0 5 1.5 5.5 4.5" />
     </>
   ),
+  itinerary: (
+    <>
+      <circle cx="12" cy="12" r="8.5" />
+      <path d="M12 7.5V12l3 2" />
+    </>
+  ),
   settings: (
     <>
       <circle cx="12" cy="12" r="3" />
@@ -49,6 +55,7 @@ const ICONS: Record<string, React.ReactNode> = {
 export const NAV = [
   { href: "/hq", label: "Event Dashboard", shortLabel: "Dashboard", icon: "home" },
   { href: "/tickets", label: "Tickets", icon: "tickets" },
+  { href: "/itinerary", label: "Itinerary", icon: "itinerary" },
   { href: "/vendors", label: "Vendors", icon: "vendors" },
   { href: "/budget", label: "Budget", icon: "budget" },
   { href: "/team", label: "Team", icon: "team" },
@@ -59,9 +66,11 @@ type Mode = "personal" | "team";
 
 /** The menu adapts to the chosen view: personal hides Team and calls tickets "Tasks". */
 function itemsFor(mode: Mode, mobile: boolean) {
+  // On phones, Settings lives in the top bar so the bottom bar stays roomy.
   return NAV.filter((item) => {
-    if (mode === "personal") return item.href !== "/team";
-    return mobile ? item.href !== "/settings" : true;
+    if (mode === "personal" && item.href === "/team") return false;
+    if (mobile && item.href === "/settings") return false;
+    return true;
   }).map((item) =>
     item.href === "/tickets" && mode === "personal" ? { ...item, label: "Tasks", icon: "tasks" } : item
   );
@@ -115,12 +124,12 @@ export function BottomNav({ mode }: { mode: Mode }) {
   const isActive = useIsActive();
   return (
     <nav className="fixed inset-x-0 bottom-0 z-20 border-t border-line bg-paper/95 backdrop-blur md:hidden">
-      <div className="mx-auto flex max-w-md justify-around px-2 pb-[env(safe-area-inset-bottom)]">
+      <div className="mx-auto flex max-w-lg justify-around px-1 pb-[env(safe-area-inset-bottom)]">
         {itemsFor(mode, true).map((item) => (
           <Link
             key={item.href}
             href={item.href}
-            className={`flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-medium ${
+            className={`flex min-w-0 flex-1 flex-col items-center gap-0.5 py-2.5 text-[10px] font-medium sm:text-[11px] ${
               isActive(item.href) ? "text-accent" : "text-muted"
             }`}
           >
