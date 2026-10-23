@@ -649,3 +649,25 @@ export async function removeDuplicate(form: FormData) {
   refresh();
   redirect("/budget?tab=expenses&review=1&removed=1");
 }
+
+/** Edit a vendor payment: name, amount and date (plus who paid, once it's paid). */
+export async function updatePayment(form: FormData) {
+  const { supabase } = await requireEvent();
+  const id = text(form, "id") ?? fail("Missing payment");
+  const { data: current } = await supabase.from("payments").select("paid").eq("id", id).maybeSingle();
+  const date = text(form, "date");
+  const changes: Record<string, unknown> = {
+    label: text(form, "label") ?? "Payment",
+    amount: num(form, "amount") ?? fail("Enter an amount"),
+  };
+  if (current?.paid) {
+    changes.paid_on = date;
+    if (text(form, "paid_by") !== null) Object.assign(changes, payerFields(form));
+    changes.method = text(form, "method");
+  } else {
+    changes.due_date = date;
+  }
+  const { error } = await supabase.from("payments").update(changes).eq("id", id);
+  if (error) fail(missingUpgrade8(error.message));
+  refresh();
+}

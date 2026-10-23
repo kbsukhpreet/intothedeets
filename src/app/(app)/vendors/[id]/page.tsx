@@ -3,8 +3,10 @@ import { notFound } from "next/navigation";
 import { requireEvent, teamPeople } from "@/lib/event";
 import { Avatar } from "@/components/avatar";
 import { AlreadyPaid } from "@/components/already-paid";
+import { Expandable } from "@/components/expandable";
+import { PaidByField } from "@/components/paid-by-field";
 import { typedPayerNames } from "@/lib/expenses";
-import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO } from "@/lib/format";
+import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO, dueLabel } from "@/lib/format";
 import { Empty, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
 import { SubmitButton } from "@/components/submit-button";
@@ -20,6 +22,7 @@ import {
   togglePayment,
   toggleTask,
   updateVendor,
+  updatePayment,
 } from "../../actions";
 
 export default async function VendorPage({
@@ -173,8 +176,8 @@ export default async function VendorPage({
                 <li className="pb-2 text-sm text-muted">No payments added yet.</li>
               )}
               {(payments ?? []).map((p) => (
-                <li key={p.id} className="flex items-center gap-3 py-2.5">
-                  <form action={togglePayment}>
+                <li key={p.id} className="flex items-start gap-3 py-2.5">
+                  <form action={togglePayment} className="pt-0.5">
                     <input type="hidden" name="id" value={p.id} />
                     <input type="hidden" name="paid" value={String(!p.paid)} />
                     <button
@@ -189,19 +192,47 @@ export default async function VendorPage({
                   <div className="min-w-0 flex-1">
                     <p className={`truncate text-sm font-medium ${p.paid ? "text-muted line-through" : ""}`}>{p.label}</p>
                     <p className="text-xs text-muted">
-                      {p.paid
-                        ? <>
-                            {`Paid${p.paid_on ? ` ${prettyDate(p.paid_on)}` : ""}`}
-                            {(p.paid_by_user_id || p.paid_by_name) && (
-                              <> · by {p.paid_by_user_id ? (p.paid_by_user_id === user.id ? "you" : people.find((x) => x.id === p.paid_by_user_id)?.name.split(" ")[0] ?? "a teammate") : p.paid_by_name}</>
-                            )}
-                            {" · "}
-                            <Link href={`/budget?tab=expenses&edit=p:${p.id}`} className="hover:text-accent">Edit</Link>
-                          </>
-                        : p.due_date
-                          ? <span className={p.due_date < today ? "text-amber" : ""}>Due {relativeDue(p.due_date)}</span>
-                          : "No due date"}
+                      {p.paid ? (
+                        <>
+                          {`Paid${p.paid_on ? ` ${prettyDate(p.paid_on)}` : ""}`}
+                          {(p.paid_by_user_id || p.paid_by_name) && (
+                            <> · by {p.paid_by_user_id ? (p.paid_by_user_id === user.id ? "you" : people.find((x) => x.id === p.paid_by_user_id)?.name.split(" ")[0] ?? "a teammate") : p.paid_by_name}</>
+                          )}
+                        </>
+                      ) : p.due_date ? (
+                        <span className={p.due_date < today ? "text-amber" : ""}>{dueLabel(p.due_date)}</span>
+                      ) : (
+                        "No due date"
+                      )}
                     </p>
+                    <Expandable className="mt-0.5 text-xs text-muted hover:text-accent">
+                      <form action={updatePayment} className="mt-2 space-y-2 rounded-xl bg-paper p-3">
+                        <input type="hidden" name="id" value={p.id} />
+                        <input name="label" required defaultValue={p.label} placeholder="Payment name" className="input" />
+                        <div className="flex gap-2">
+                          <input name="amount" required inputMode="decimal" defaultValue={Number(p.amount)} placeholder="$ Amount" className="input" />
+                          <DatePicker
+                            name="date"
+                            defaultValue={p.paid ? p.paid_on : p.due_date}
+                            placeholder={p.paid ? "Date paid" : "Due date"}
+                            prefix={p.paid ? "Paid " : "Due "}
+                            short
+                            align="right"
+                          />
+                        </div>
+                        {p.paid && (
+                          <PaidByField
+                            people={people}
+                            typedNames={typedNames}
+                            defaultValue={p.paid_by_user_id ? `user:${p.paid_by_user_id}` : p.paid_by_name ? `name:${p.paid_by_name}` : ""}
+                            meId={user.id}
+                          />
+                        )}
+                        <div className="flex justify-end">
+                          <SubmitButton className="btn-primary py-1.5">Save</SubmitButton>
+                        </div>
+                      </form>
+                    </Expandable>
                   </div>
                   <span className="text-sm tabular-nums">{money(p.amount)}</span>
                   <form action={deletePayment}>

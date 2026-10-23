@@ -207,3 +207,13 @@ export const EXPENSE_CATEGORIES = [
 ] as const;
 
 export const PAYMENT_METHODS = ["Card", "Cash", "Check", "Zelle", "Venmo", "Bank transfer", "Other"] as const;
+
+/** "Due in 3 days", "Due today", "12 days overdue", "Due Dec 10" */
+export function dueLabel(day: string) {
+  const n = daysUntil(day);
+  if (n < 0) return `${-n} day${n === -1 ? "" : "s"} overdue`;
+  if (n === 0) return "Due today";
+  if (n === 1) return "Due tomorrow";
+  if (n <= 14) return `Due in ${n} days`;
+  return `Due ${prettyDate(day)}`;
+}
