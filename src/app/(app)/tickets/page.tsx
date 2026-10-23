@@ -133,8 +133,8 @@ export default async function TicketsPage({ searchParams }: { searchParams: Sear
         <input
           name="title"
           required
-          placeholder="New ticket… e.g. Get quotes from 3 caterers"
-          className="input min-w-[220px] flex-[2] border-0 focus:ring-0"
+          placeholder="Ticket title, e.g. Book the DJ"
+          className="input min-w-[220px] flex-[2]"
         />
         <select name="assignee_id" defaultValue={whoKey === "me" ? user.id : personById.has(whoKey) ? whoKey : ""} className="input select-placeholder w-auto" aria-label="Assign to">
           {assigneeOptions.map((o) => (

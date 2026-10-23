@@ -88,7 +88,7 @@ export async function PersonalTasks({
             name="title"
             required
             placeholder="Add a task… e.g. Book hair & makeup trial"
-            className="input min-w-[200px] flex-1 border-0 focus:ring-0"
+            className="input min-w-[200px] flex-1"
           />
           <DatePicker name="due_date" placeholder="Due date" prefix="Due " short className="w-auto min-w-[9.5rem]" ariaLabel="Due date" />
           <select name="priority" defaultValue="" className="input select-placeholder w-auto" aria-label="Priority level">
