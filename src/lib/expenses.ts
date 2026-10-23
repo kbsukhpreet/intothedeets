@@ -81,3 +81,12 @@ export async function loadExpenses(supabase: Supabase, eventId: string, people: 
   const typedNames = [...new Set((exp ?? []).map((e) => e.paid_by_name).concat((pay ?? []).map((p) => p.paid_by_name)).filter(Boolean))] as string[];
   return { rows, typedNames };
 }
+
+/** Names people have typed into "Paid by" before, so they can be picked again. */
+export async function typedPayerNames(supabase: Supabase, eventId: string) {
+  const [{ data: a }, { data: b }] = await Promise.all([
+    supabase.from("expenses").select("paid_by_name").eq("event_id", eventId).not("paid_by_name", "is", null),
+    supabase.from("payments").select("paid_by_name").eq("event_id", eventId).not("paid_by_name", "is", null),
+  ]);
+  return [...new Set([...(a ?? []), ...(b ?? [])].map((r) => r.paid_by_name as string).filter(Boolean))];
+}

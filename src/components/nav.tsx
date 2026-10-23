@@ -55,9 +55,9 @@ const ICONS: Record<string, React.ReactNode> = {
 export const NAV = [
   { href: "/hq", label: "Event Dashboard", shortLabel: "Dashboard", icon: "home" },
   { href: "/tickets", label: "Tickets", icon: "tickets" },
-  { href: "/itinerary", label: "Itinerary", icon: "itinerary" },
   { href: "/vendors", label: "Vendors", icon: "vendors" },
-  { href: "/budget", label: "Budget", icon: "budget" },
+  { href: "/budget", label: "Budget & Expenses", shortLabel: "Budget", icon: "budget" },
+  { href: "/itinerary", label: "Itinerary", icon: "itinerary" },
   { href: "/team", label: "Team", icon: "team" },
   { href: "/settings", label: "Settings", icon: "settings" },
 ];

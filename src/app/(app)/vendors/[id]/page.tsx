@@ -2,6 +2,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { requireEvent, teamPeople } from "@/lib/event";
 import { Avatar } from "@/components/avatar";
+import { AlreadyPaid } from "@/components/already-paid";
+import { typedPayerNames } from "@/lib/expenses";
 import { NOTE_CHANNELS, channelLabel, money, prettyDate, relativeDue, todayISO } from "@/lib/format";
 import { Empty, StatusPill } from "@/components/page-header";
 import { VendorFields } from "@/components/vendor-fields";
@@ -27,7 +29,10 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
 
   const { data: vendor } = await supabase.from("vendors").select("*").eq("id", id).eq("event_id", event.id).maybeSingle();
   if (!vendor) notFound();
-  const people = await teamPeople(supabase, event.team_id, user.id);
+  const [people, typedNames] = await Promise.all([
+    teamPeople(supabase, event.team_id, user.id),
+    typedPayerNames(supabase, event.id),
+  ]);
 
   const [{ data: notes }, { data: payments }, { data: tasks }] = await Promise.all([
     supabase
@@ -38,7 +43,7 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
       .order("created_at", { ascending: false }),
     supabase
       .from("payments")
-      .select("id, label, amount, due_date, paid, paid_on")
+      .select("id, label, amount, due_date, paid, paid_on, paid_by_user_id, paid_by_name")
       .eq("vendor_id", id)
       .order("due_date", { ascending: true, nullsFirst: false }),
     supabase
@@ -168,7 +173,14 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                     <p className={`truncate text-sm font-medium ${p.paid ? "text-muted line-through" : ""}`}>{p.label}</p>
                     <p className="text-xs text-muted">
                       {p.paid
-                        ? `Paid${p.paid_on ? ` ${prettyDate(p.paid_on)}` : ""}`
+                        ? <>
+                            {`Paid${p.paid_on ? ` ${prettyDate(p.paid_on)}` : ""}`}
+                            {(p.paid_by_user_id || p.paid_by_name) && (
+                              <> · by {p.paid_by_user_id ? (p.paid_by_user_id === user.id ? "you" : people.find((x) => x.id === p.paid_by_user_id)?.name.split(" ")[0] ?? "a teammate") : p.paid_by_name}</>
+                            )}
+                            {" · "}
+                            <Link href={`/budget?tab=expenses&edit=p:${p.id}`} className="hover:text-accent">Edit</Link>
+                          </>
                         : p.due_date
                           ? <span className={p.due_date < today ? "text-amber" : ""}>Due {relativeDue(p.due_date)}</span>
                           : "No due date"}
@@ -193,10 +205,8 @@ export default async function VendorPage({ params }: { params: Promise<{ id: str
                 <input name="amount" inputMode="decimal" placeholder="$ Amount" className="input" required />
                 <DatePicker name="due_date" placeholder="Due date" prefix="Due " short align="right" ariaLabel="Payment due date" />
               </div>
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-2 text-sm text-muted">
-                  <input type="checkbox" name="paid" className="accent-[#a8553f]" /> Already paid
-                </label>
+              <AlreadyPaid people={people} typedNames={typedNames} meId={user.id} />
+              <div className="flex justify-end">
                 <SubmitButton className="btn-ghost">Add payment</SubmitButton>
               </div>
             </form>

@@ -15,7 +15,7 @@ Event planning, organized: vendors, conversation history, payments, budget and t
 - **Tickets dashboard:** progress for each person, a board and list view, and filters for me / a teammate / unassigned / an event
 - **Event Dashboard:** countdown, payments due in the next 90 days, your tickets, vendor follow-ups, recent conversations
 - **Vendors:** a workspace per vendor with contact info, status, contract total, a conversation log, payment schedule and tickets. Search covers conversation history too
-- **Budget** (three tabs):
+- **Budget & Expenses** (three tabs):
   - **Overview:** budget vs committed vs spent, spent by person, spent by category, and each vendor's contract/paid/remaining
   - **Expenses:** a table of everything spent (date, what, category, who paid, method, amount). Paid vendor payments appear automatically; the payer can be a teammate or a typed-in name like "Groom's parents". Filters and CSV download
   - **Payment schedule:** upcoming, past-due and paid vendor payments

@@ -87,7 +87,7 @@ export default async function BudgetPage({
 
   return (
     <div className="space-y-6">
-      <PageHeader title="Budget" subtitle="What you've planned, what you've spent, and what's coming up." />
+      <PageHeader title="Budget & Expenses" subtitle="What you've planned, what you've spent, and what's coming up." />
 
       {/* Tabs */}
       <nav className="flex w-fit rounded-xl border border-line bg-white p-1 text-sm" aria-label="Budget sections">
@@ -345,7 +345,7 @@ function Expenses({
         )}
         {rows.length > 0 && (
           <>
-            <FilterSelect param="who" value={params.who ?? "all"} options={payerOptions} ariaLabel="Filter by who paid" className="input w-auto py-1.5 text-sm" />
+            <FilterSelect param="who" value={params.who ?? "all"} options={payerOptions} ariaLabel="Filter by paid by" className="input w-auto py-1.5 text-sm" />
             <FilterSelect param="cat" value={params.cat ?? "all"} options={categoryOptions} ariaLabel="Filter by category" className="input w-auto py-1.5 text-sm" />
             <a href="/budget/export" className="ml-auto text-sm text-muted hover:text-accent" download>
               Download spreadsheet (CSV)

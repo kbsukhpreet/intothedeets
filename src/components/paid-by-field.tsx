@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-/** "Who paid?" — pick a teammate, a name typed before, or type someone new. */
+/** "Paid by" — pick a teammate, a name typed before, or type someone new. */
 export function PaidByField({
   people,
   typedNames,
@@ -22,9 +22,9 @@ export function PaidByField({
         value={value}
         onChange={(e) => setValue(e.target.value)}
         className="input select-placeholder"
-        aria-label="Who paid?"
+        aria-label="Paid by"
       >
-        <option value="">Who paid?</option>
+        <option value="">Paid by</option>
         <optgroup label="Team">
           {people.map((p) => (
             <option key={p.id} value={`user:${p.id}`}>{p.id === meId ? `${p.name} (me)` : p.name}</option>

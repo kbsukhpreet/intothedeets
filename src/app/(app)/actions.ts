@@ -115,7 +115,8 @@ export async function addPayment(form: FormData) {
     paid_on: paid ? todayISO() : null,
   };
   // Record who paid (the person ticking it off). Falls back gracefully if upgrade 8 isn't run yet.
-  let { error } = await supabase.from("payments").insert(paid ? { ...row, paid_by_user_id: user.id } : row);
+  const payer = text(form, "paid_by") ? payerFields(form) : { paid_by_user_id: user.id };
+  let { error } = await supabase.from("payments").insert(paid ? { ...row, ...payer } : row);
   if (error && /paid_by_user_id/.test(error.message)) ({ error } = await supabase.from("payments").insert(row));
   if (error) fail(error.message);
   refresh();
