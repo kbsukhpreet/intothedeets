@@ -9,6 +9,8 @@ import { CopyButton } from "@/components/copy-button";
 import { DatePicker } from "@/components/date-picker";
 import { TimeSelect } from "@/components/time-select";
 import { Avatar } from "@/components/avatar";
+import { Popover } from "@/components/popover";
+import { Expandable } from "@/components/expandable";
 import {
   addItineraryDay,
   addItineraryItem,
@@ -107,7 +109,7 @@ export default async function ItineraryPage({
         name="title"
         required
         defaultValue={item?.title ?? ""}
-        placeholder="What's happening? e.g. Baraat arrives"
+        placeholder="What's happening? e.g. Guests arrive"
         className="input sm:col-span-2"
       />
       <input name="location" defaultValue={item?.location ?? ""} placeholder="Where? e.g. Front lawn" className="input" />
@@ -175,19 +177,16 @@ export default async function ItineraryPage({
                 </Link>
               );
             })}
-            <details className="group relative">
-              <summary className="cursor-pointer list-none rounded-2xl border border-dashed border-line px-4 py-3 text-sm font-medium text-accent hover:border-accent/50">
-                + Add day
-              </summary>
-              <form
-                action={addItineraryDay}
-                className="absolute left-0 z-20 mt-2 w-[300px] space-y-3 rounded-2xl border border-line bg-white p-4 shadow-[0_12px_40px_-12px_rgba(34,30,26,0.25)]"
-              >
+            <Popover
+              label="+ Add day"
+              triggerClassName="rounded-2xl border border-dashed border-line px-4 py-3 text-sm font-medium text-accent hover:border-accent/50"
+            >
+              <form action={addItineraryDay} className="space-y-3">
                 <input name="title" required placeholder="e.g. Welcome dinner" className="input" />
                 <DatePicker name="day_date" placeholder="Date" short />
                 <SubmitButton className="btn-primary w-full" pendingText="Adding…">Add day</SubmitButton>
               </form>
-            </details>
+            </Popover>
           </div>
 
           {day && (
@@ -209,9 +208,7 @@ export default async function ItineraryPage({
                       </Link>
                     </div>
                   )}
-                  <details className="group relative">
-                    <summary className="cursor-pointer list-none text-sm text-muted hover:text-ink">Edit day</summary>
-                    <div className="absolute right-0 z-20 mt-2 w-[300px] rounded-2xl border border-line bg-white p-4 shadow-[0_12px_40px_-12px_rgba(34,30,26,0.25)]">
+                  <Popover key={day.id} label="Edit day" align="right" triggerClassName="text-sm text-muted hover:text-ink">
                       <form action={updateItineraryDay} className="space-y-3">
                         <input type="hidden" name="id" value={day.id} />
                         <input name="title" required defaultValue={day.title} className="input" />
@@ -227,8 +224,7 @@ export default async function ItineraryPage({
                           Delete this day
                         </ConfirmButton>
                       </form>
-                    </div>
-                  </details>
+                  </Popover>
                 </div>
               </div>
 
@@ -281,8 +277,8 @@ export default async function ItineraryPage({
                               </p>
                             )}
                             {i.notes && <p className="mt-1.5 whitespace-pre-wrap text-sm text-muted">{i.notes}</p>}
-                            <details className="mt-2">
-                              <summary className="cursor-pointer list-none text-xs text-muted hover:text-accent">Edit</summary>
+                            <div className="mt-2">
+                            <Expandable>
                               <form action={updateItineraryItem} className="mt-3 space-y-3">
                                 <input type="hidden" name="id" value={i.id} />
                                 <ItemFields item={i} />
@@ -296,7 +292,8 @@ export default async function ItineraryPage({
                                   Remove item
                                 </ConfirmButton>
                               </form>
-                            </details>
+                            </Expandable>
+                            </div>
                           </div>
                         </div>
                       </li>

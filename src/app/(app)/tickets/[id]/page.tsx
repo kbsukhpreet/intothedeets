@@ -7,6 +7,7 @@ import { SubmitButton } from "@/components/submit-button";
 import { ConfirmButton } from "@/components/confirm-button";
 import { PriorityTag, StatusPill } from "@/components/ticket-bits";
 import { Lock } from "@/components/lock";
+import { Expandable } from "@/components/expandable";
 import { DatePicker } from "@/components/date-picker";
 import { addComment, deleteComment, deleteTask, editComment, updateTicket } from "../../actions";
 
@@ -122,10 +123,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                       <p className="whitespace-pre-wrap text-sm leading-relaxed">{c.body}</p>
                     </div>
                     {mine && (
-                      <details className="group mt-1">
-                        <summary className="inline-flex cursor-pointer list-none gap-3 text-xs text-muted">
-                          <span className="hover:text-accent">Edit</span>
-                        </summary>
+                      <div className="mt-1">
+                      <Expandable>
                         <form action={editComment} className="mt-2 space-y-2">
                           <input type="hidden" name="id" value={c.id} />
                           <textarea name="body" required rows={3} defaultValue={c.body} className="input resize-y" />
@@ -139,7 +138,8 @@ export default async function TicketPage({ params }: { params: Promise<{ id: str
                             Delete comment
                           </ConfirmButton>
                         </form>
-                      </details>
+                      </Expandable>
+                      </div>
                     )}
                   </div>
                 </li>
